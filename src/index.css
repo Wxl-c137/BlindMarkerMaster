@@ -122,6 +122,7 @@ body::after {
   transform-style: preserve-3d;
   margin: 8px;
   animation: cube-spin 6s linear infinite;
+  will-change: transform;
 }
 
 .cube-face {
@@ -172,9 +173,8 @@ body::after {
 }
 
 @keyframes cube-spin {
-  0%   { transform: rotateY(0deg)   rotateX(-25deg) translateY(0px); }
-  50%  { transform: rotateY(180deg) rotateX(-25deg) translateY(-3px); }
-  100% { transform: rotateY(360deg) rotateX(-25deg) translateY(0px); }
+  from { transform: rotateX(-22deg) rotateY(0deg); }
+  to   { transform: rotateX(-22deg) rotateY(360deg); }
 }
 
 /* ── Light mode cube overrides ───────────────────── */
