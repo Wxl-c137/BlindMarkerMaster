@@ -1,0 +1,279 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --cyan: #00f5ff;
+  --pink: #ff0080;
+  --purple: #a855f7;
+  --green: #00ff88;
+  --bg: #07071a;
+  --card: #0d0d23;
+
+  font-family: 'Chakra Petch', system-ui, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: var(--bg);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: var(--bg);
+  /* Retro grid */
+  background-image:
+    linear-gradient(rgba(0, 245, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 245, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+#root {
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ── Focus-visible: keyboard nav ring ─────────── */
+/* Overrides focus:outline-none while preserving mouse-click UX */
+*:focus-visible {
+  outline: 2px solid rgba(0, 245, 255, 0.55) !important;
+  outline-offset: 2px !important;
+}
+.light *:focus-visible {
+  outline: 2px solid rgba(99, 102, 241, 0.65) !important;
+  outline-offset: 2px !important;
+}
+
+/* ── Scrollbar ─────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--card); }
+::-webkit-scrollbar-thumb { background: rgba(0, 245, 255, 0.25); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0, 245, 255, 0.5); }
+
+/* ── Range slider ──────────────────────────────── */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  background: rgba(0, 245, 255, 0.12);
+  border-radius: 2px;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 8px rgba(0, 245, 255, 0.8);
+  margin-top: -6px;
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+input[type="range"]:hover::-webkit-slider-thumb {
+  box-shadow: 0 0 14px rgba(0, 245, 255, 1);
+}
+input[type="range"]:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Checkbox ──────────────────────────────────── */
+input[type="checkbox"] { accent-color: var(--cyan); }
+
+/* ── Subtle CRT scanlines ──────────────────────── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.04) 2px,
+    rgba(0, 0, 0, 0.04) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ── 3D Cube Icon ───────────────────────────────── */
+.cube-icon-wrap {
+  width: 36px;
+  height: 36px;
+  perspective: 120px;
+  display: inline-block;
+}
+
+.cube-3d {
+  width: 20px;
+  height: 20px;
+  position: relative;
+  transform-style: preserve-3d;
+  margin: 8px;
+  animation: cube-spin 6s linear infinite;
+}
+
+.cube-face {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid;
+}
+
+/* Cyan front face */
+.face-front {
+  transform: translateZ(10px);
+  background: rgba(0, 245, 255, 0.12);
+  border-color: rgba(0, 245, 255, 0.85);
+  box-shadow: 0 0 10px rgba(0, 245, 255, 0.5), inset 0 0 8px rgba(0, 245, 255, 0.12);
+}
+/* Dim rear face */
+.face-back {
+  transform: rotateY(180deg) translateZ(10px);
+  background: rgba(0, 245, 255, 0.03);
+  border-color: rgba(0, 245, 255, 0.18);
+}
+/* Purple left face */
+.face-left {
+  transform: rotateY(-90deg) translateZ(10px);
+  background: rgba(168, 85, 247, 0.12);
+  border-color: rgba(168, 85, 247, 0.85);
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.5), inset 0 0 8px rgba(168, 85, 247, 0.12);
+}
+/* Dim right face */
+.face-right {
+  transform: rotateY(90deg) translateZ(10px);
+  background: rgba(168, 85, 247, 0.03);
+  border-color: rgba(168, 85, 247, 0.18);
+}
+/* Pink top face */
+.face-top {
+  transform: rotateX(90deg) translateZ(10px);
+  background: rgba(255, 0, 128, 0.12);
+  border-color: rgba(255, 0, 128, 0.8);
+  box-shadow: 0 0 10px rgba(255, 0, 128, 0.5), inset 0 0 8px rgba(255, 0, 128, 0.12);
+}
+/* Dark bottom face (in shadow) */
+.face-bottom {
+  transform: rotateX(-90deg) translateZ(10px);
+  background: rgba(0, 0, 0, 0.55);
+  border-color: rgba(255, 255, 255, 0.07);
+}
+
+@keyframes cube-spin {
+  0%   { transform: rotateY(0deg)   rotateX(-25deg) translateY(0px); }
+  50%  { transform: rotateY(180deg) rotateX(-25deg) translateY(-3px); }
+  100% { transform: rotateY(360deg) rotateX(-25deg) translateY(0px); }
+}
+
+/* ── Light mode cube overrides ───────────────────── */
+.light .face-front {
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.8);
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.35), inset 0 0 8px rgba(99, 102, 241, 0.1);
+}
+.light .face-back {
+  background: rgba(99, 102, 241, 0.03);
+  border-color: rgba(99, 102, 241, 0.15);
+}
+.light .face-left {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.8);
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.35), inset 0 0 8px rgba(139, 92, 246, 0.1);
+}
+.light .face-right {
+  background: rgba(139, 92, 246, 0.03);
+  border-color: rgba(139, 92, 246, 0.15);
+}
+.light .face-top {
+  background: rgba(225, 29, 72, 0.1);
+  border-color: rgba(225, 29, 72, 0.7);
+  box-shadow: 0 0 10px rgba(225, 29, 72, 0.3), inset 0 0 8px rgba(225, 29, 72, 0.1);
+}
+.light .face-bottom {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+
+/* ── Focus styles (keyboard navigation) ────────────
+   Unlayered rules beat Tailwind @layer utilities,
+   so these override focus:outline-none on all buttons
+   and inputs when focused via keyboard (Tab key).
+   Mouse/touch focus does NOT trigger :focus-visible.
+   ─────────────────────────────────────────────────── */
+button:focus-visible,
+input[type="text"]:focus-visible,
+input[type="password"]:focus-visible {
+  outline: 2px solid rgba(0, 245, 255, 0.8);
+  outline-offset: 2px;
+}
+
+.light button:focus-visible,
+.light input[type="text"]:focus-visible,
+.light input[type="password"]:focus-visible {
+  outline: 2px solid rgba(99, 102, 241, 0.85);
+  outline-offset: 2px;
+}
+
+/* ── Active (press) feedback ────────────────────────
+   3% scale-down on click gives physical button feel.
+   Disabled buttons are excluded.
+   ─────────────────────────────────────────────────── */
+button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* ── Light mode overrides ──────────────────────── */
+.light {
+  color-scheme: light;
+  color: #0f172a;
+  background-color: #f0f4ff;
+}
+
+.light body {
+  background-color: #f0f4ff;
+  background-image:
+    linear-gradient(rgba(99, 102, 241, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99, 102, 241, 0.04) 1px, transparent 1px);
+}
+
+.light body::after {
+  display: none;
+}
+
+.light ::-webkit-scrollbar-track { background: #e8ecf8; }
+.light ::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.25); }
+.light ::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.5); }
+
+.light input[type="range"]::-webkit-slider-runnable-track {
+  background: rgba(99, 102, 241, 0.15);
+}
+.light input[type="range"]::-webkit-slider-thumb {
+  background: #6366f1;
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.6);
+}
+.light input[type="range"]:hover::-webkit-slider-thumb {
+  box-shadow: 0 0 14px rgba(99, 102, 241, 0.9);
+}
+
+.light input[type="checkbox"] { accent-color: #6366f1; }
+
+/* ── Reduced motion ────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

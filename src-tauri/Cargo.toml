@@ -1,0 +1,52 @@
+[package]
+name = "blindmark-master"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "blindmark-master"
+path = "src/main.rs"
+
+[dependencies]
+# Tauri core
+tauri = { version = "2.0", features = [] }
+tauri-plugin-dialog = "2.0"
+tauri-plugin-fs = "2.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0", features = ["preserve_order"] }
+
+# Image processing
+image = "0.25"
+ndarray = "0.16"
+nalgebra = "0.33"
+
+# Watermarking algorithms
+md-5 = "0.10"
+
+# Archive handling
+zip = { version = "2.1", features = ["deflate"] }
+sevenz-rust = "0.6"
+# Note: unrar support requires system library
+
+# Excel reading
+calamine = "0.26"
+
+# File operations
+tempfile = "3.13"
+walkdir = "2.5"
+
+# Parallel processing
+rayon = "1.10"
+num_cpus = "1.16"
+rand = { version = "0.8", features = ["small_rng"] }
+aes-gcm = "0.10"
+sha2 = "0.10"
+
+# Error handling
+thiserror = "2.0"
+
+[build-dependencies]
+tauri-build = { version = "2.0", features = [] }
