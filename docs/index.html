@@ -182,41 +182,47 @@
     .c3 { position:relative; transform-style:preserve-3d; animation:cspin 8s linear infinite; will-change:transform; }
     .cf { position:absolute; border:2px solid transparent; border-radius:8px; }
 
-    /* 正面：扫描线 + 深色玻璃 + 彩虹棱边 + 居中文字 */
+    /* 正面：玻璃高光 + 扫描线 + 透明玻璃 + 彩虹棱边 + 居中文字 */
     .cf-fr {
       transform:translateZ(var(--tz));
       background:
-        repeating-linear-gradient(0deg, rgba(0,0,0,.14) 0 1px, transparent 1px 3px) padding-box,
-        rgba(3,3,18,.92) padding-box,
+        radial-gradient(ellipse at 28% 22%, rgba(255,255,255,.18) 0%, transparent 52%) padding-box,
+        linear-gradient(145deg, rgba(255,255,255,.07) 0%, transparent 42%) padding-box,
+        repeating-linear-gradient(0deg, rgba(0,0,0,.10) 0 1px, transparent 1px 3px) padding-box,
+        rgba(8,8,28,.26) padding-box,
         conic-gradient(from 20deg at 50% 50%, #00f5ff, #7c3aed, #ec4899, #22d3ee, #f97316, #00f5ff) border-box;
-      box-shadow:0 0 4px rgba(255,255,255,.15), 0 0 16px rgba(0,245,255,.28), 0 0 35px rgba(168,85,247,.18);
+      box-shadow:0 0 6px rgba(255,255,255,.18), 0 0 18px rgba(0,245,255,.32), 0 0 40px rgba(168,85,247,.20);
       display:flex; align-items:center; justify-content:center; }
     .cf-bk {
       transform:rotateY(180deg) translateZ(var(--tz));
       background:
-        rgba(1,1,12,.94) padding-box,
+        radial-gradient(ellipse at 70% 75%, rgba(255,255,255,.08) 0%, transparent 50%) padding-box,
+        rgba(4,4,18,.24) padding-box,
         conic-gradient(from 200deg at 50% 50%, #00f5ff, #7c3aed, #ec4899, #22d3ee, #00f5ff) border-box; }
     .cf-lt {
       transform:rotateY(-90deg) translateZ(var(--tz));
       background:
-        rgba(3,3,18,.88) padding-box,
+        radial-gradient(ellipse at 30% 25%, rgba(255,255,255,.12) 0%, transparent 55%) padding-box,
+        rgba(6,4,22,.28) padding-box,
         conic-gradient(from 110deg at 50% 50%, #7c3aed, #ec4899, #22d3ee, #00f5ff, #7c3aed) border-box;
-      box-shadow:0 0 3px rgba(255,255,255,.1), 0 0 12px rgba(168,85,247,.32); }
+      box-shadow:0 0 4px rgba(255,255,255,.12), 0 0 14px rgba(168,85,247,.35); }
     .cf-rt {
       transform:rotateY(90deg) translateZ(var(--tz));
       background:
-        rgba(3,3,18,.82) padding-box,
+        radial-gradient(ellipse at 65% 30%, rgba(255,255,255,.10) 0%, transparent 50%) padding-box,
+        rgba(6,4,22,.24) padding-box,
         conic-gradient(from 290deg at 50% 50%, #22d3ee, #00f5ff, #7c3aed, #ec4899, #22d3ee) border-box; }
     .cf-tp {
       transform:rotateX(90deg) translateZ(var(--tz));
       background:
-        rgba(3,3,18,.86) padding-box,
+        radial-gradient(ellipse at 40% 40%, rgba(255,255,255,.20) 0%, transparent 60%) padding-box,
+        rgba(8,6,24,.22) padding-box,
         conic-gradient(from 45deg at 50% 50%, #00f5ff, #22d3ee, #f97316, #ec4899, #7c3aed, #00f5ff) border-box;
-      box-shadow:0 0 3px rgba(255,255,255,.1), 0 0 12px rgba(244,63,94,.28); }
+      box-shadow:0 0 4px rgba(255,255,255,.14), 0 0 14px rgba(244,63,94,.30); }
     .cf-bt {
       transform:rotateX(-90deg) translateZ(var(--tz));
       background:
-        rgba(1,1,10,.97) padding-box,
+        rgba(2,2,12,.30) padding-box,
         conic-gradient(from 225deg at 50% 50%, #7c3aed, #22d3ee, #00f5ff, #ec4899, #7c3aed) border-box; }
 
     @keyframes cspin {
@@ -306,16 +312,16 @@
 
     <!-- Hero cube -->
     <div class="flex justify-center mb-9" aria-hidden="true">
-      <div class="cw" style="width:200px;height:200px;perspective:500px;">
-        <div class="c3" style="width:160px;height:160px;margin:20px;--tz:80px;">
-          <div class="cf cf-fr" style="width:160px;height:160px;">
-            <span style="font-family:'Press Start 2P',monospace;font-size:26px;color:#fff;letter-spacing:4px;user-select:none;text-shadow:0 0 4px #fff,0 0 16px rgba(0,245,255,.95),0 0 32px rgba(0,245,255,.6),0 0 60px rgba(168,85,247,.4);">lulu</span>
+      <div class="cw" style="width:150px;height:150px;perspective:380px;">
+        <div class="c3" style="width:110px;height:110px;margin:20px;--tz:55px;">
+          <div class="cf cf-fr" style="width:110px;height:110px;">
+            <span style="font-family:'Press Start 2P',monospace;font-size:16px;color:#fff;letter-spacing:3px;user-select:none;text-shadow:0 0 4px #fff,0 0 14px rgba(0,245,255,.95),0 0 28px rgba(0,245,255,.6),0 0 50px rgba(168,85,247,.4);">lulu</span>
           </div>
-          <div class="cf cf-bk" style="width:160px;height:160px;"></div>
-          <div class="cf cf-lt" style="width:160px;height:160px;"></div>
-          <div class="cf cf-rt" style="width:160px;height:160px;"></div>
-          <div class="cf cf-tp" style="width:160px;height:160px;"></div>
-          <div class="cf cf-bt" style="width:160px;height:160px;"></div>
+          <div class="cf cf-bk" style="width:110px;height:110px;"></div>
+          <div class="cf cf-lt" style="width:110px;height:110px;"></div>
+          <div class="cf cf-rt" style="width:110px;height:110px;"></div>
+          <div class="cf cf-tp" style="width:110px;height:110px;"></div>
+          <div class="cf cf-bt" style="width:110px;height:110px;"></div>
         </div>
       </div>
     </div>

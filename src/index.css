@@ -125,7 +125,7 @@ body::after {
   will-change: transform;
 }
 
-/* 所有面：深色玻璃 + conic 彩虹棱边 */
+/* 所有面：透明玻璃 + 高光 + conic 彩虹棱边 */
 .cube-face {
   position: absolute;
   width: 20px;
@@ -137,40 +137,46 @@ body::after {
 .face-front {
   transform: translateZ(10px);
   background:
-    rgba(3,3,18,.92) padding-box,
+    radial-gradient(ellipse at 28% 22%, rgba(255,255,255,.18) 0%, transparent 52%) padding-box,
+    linear-gradient(145deg, rgba(255,255,255,.07) 0%, transparent 42%) padding-box,
+    rgba(8,8,28,.26) padding-box,
     conic-gradient(from 20deg at 50% 50%, #00f5ff, #7c3aed, #ec4899, #22d3ee, #f97316, #00f5ff) border-box;
   box-shadow: 0 0 5px rgba(0,245,255,.4), 0 0 14px rgba(0,245,255,.2), 0 0 22px rgba(168,85,247,.15);
 }
 .face-back {
   transform: rotateY(180deg) translateZ(10px);
   background:
-    rgba(1,1,12,.94) padding-box,
+    radial-gradient(ellipse at 70% 75%, rgba(255,255,255,.08) 0%, transparent 50%) padding-box,
+    rgba(4,4,18,.24) padding-box,
     conic-gradient(from 200deg at 50% 50%, #00f5ff, #7c3aed, #ec4899, #22d3ee, #00f5ff) border-box;
 }
 .face-left {
   transform: rotateY(-90deg) translateZ(10px);
   background:
-    rgba(3,3,18,.88) padding-box,
+    radial-gradient(ellipse at 30% 25%, rgba(255,255,255,.12) 0%, transparent 55%) padding-box,
+    rgba(6,4,22,.28) padding-box,
     conic-gradient(from 110deg at 50% 50%, #7c3aed, #ec4899, #22d3ee, #00f5ff, #7c3aed) border-box;
   box-shadow: 0 0 5px rgba(168,85,247,.38), 0 0 12px rgba(168,85,247,.18);
 }
 .face-right {
   transform: rotateY(90deg) translateZ(10px);
   background:
-    rgba(3,3,18,.82) padding-box,
+    radial-gradient(ellipse at 65% 30%, rgba(255,255,255,.10) 0%, transparent 50%) padding-box,
+    rgba(6,4,22,.24) padding-box,
     conic-gradient(from 290deg at 50% 50%, #22d3ee, #00f5ff, #7c3aed, #ec4899, #22d3ee) border-box;
 }
 .face-top {
   transform: rotateX(90deg) translateZ(10px);
   background:
-    rgba(3,3,18,.86) padding-box,
+    radial-gradient(ellipse at 40% 40%, rgba(255,255,255,.20) 0%, transparent 60%) padding-box,
+    rgba(8,6,24,.22) padding-box,
     conic-gradient(from 45deg at 50% 50%, #00f5ff, #22d3ee, #f97316, #ec4899, #7c3aed, #00f5ff) border-box;
   box-shadow: 0 0 5px rgba(244,63,94,.35), 0 0 12px rgba(244,63,94,.18);
 }
 .face-bottom {
   transform: rotateX(-90deg) translateZ(10px);
   background:
-    rgba(1,1,10,.97) padding-box,
+    rgba(2,2,12,.30) padding-box,
     conic-gradient(from 225deg at 50% 50%, #7c3aed, #22d3ee, #00f5ff, #ec4899, #7c3aed) border-box;
 }
 
@@ -182,35 +188,41 @@ body::after {
 /* ── Light mode cube overrides ───────────────────── */
 .light .face-front {
   background:
-    rgba(240,245,255,.92) padding-box,
+    radial-gradient(ellipse at 28% 22%, rgba(255,255,255,.30) 0%, transparent 52%) padding-box,
+    linear-gradient(145deg, rgba(255,255,255,.12) 0%, transparent 42%) padding-box,
+    rgba(220,228,255,.30) padding-box,
     conic-gradient(from 20deg at 50% 50%, #6366f1, #8b5cf6, #ec4899, #3b82f6, #06b6d4, #6366f1) border-box;
   box-shadow: 0 0 5px rgba(99,102,241,.45), 0 0 14px rgba(99,102,241,.22);
 }
 .light .face-back {
   background:
-    rgba(230,235,255,.88) padding-box,
+    radial-gradient(ellipse at 70% 75%, rgba(255,255,255,.15) 0%, transparent 50%) padding-box,
+    rgba(210,220,255,.28) padding-box,
     conic-gradient(from 200deg at 50% 50%, #6366f1, #8b5cf6, #ec4899, #3b82f6, #6366f1) border-box;
 }
 .light .face-left {
   background:
-    rgba(235,230,255,.88) padding-box,
+    radial-gradient(ellipse at 30% 25%, rgba(255,255,255,.22) 0%, transparent 55%) padding-box,
+    rgba(215,210,255,.28) padding-box,
     conic-gradient(from 110deg at 50% 50%, #8b5cf6, #ec4899, #3b82f6, #6366f1, #8b5cf6) border-box;
   box-shadow: 0 0 5px rgba(139,92,246,.4), 0 0 12px rgba(139,92,246,.2);
 }
 .light .face-right {
   background:
-    rgba(235,230,255,.82) padding-box,
+    radial-gradient(ellipse at 65% 30%, rgba(255,255,255,.18) 0%, transparent 50%) padding-box,
+    rgba(215,210,255,.24) padding-box,
     conic-gradient(from 290deg at 50% 50%, #3b82f6, #6366f1, #8b5cf6, #ec4899, #3b82f6) border-box;
 }
 .light .face-top {
   background:
-    rgba(240,230,245,.86) padding-box,
+    radial-gradient(ellipse at 40% 40%, rgba(255,255,255,.35) 0%, transparent 60%) padding-box,
+    rgba(218,208,245,.26) padding-box,
     conic-gradient(from 45deg at 50% 50%, #6366f1, #3b82f6, #f97316, #ec4899, #8b5cf6, #6366f1) border-box;
   box-shadow: 0 0 5px rgba(225,29,72,.35), 0 0 12px rgba(225,29,72,.18);
 }
 .light .face-bottom {
   background:
-    rgba(220,225,255,.95) padding-box,
+    rgba(200,210,255,.32) padding-box,
     conic-gradient(from 225deg at 50% 50%, #8b5cf6, #3b82f6, #6366f1, #ec4899, #8b5cf6) border-box;
 }
 
