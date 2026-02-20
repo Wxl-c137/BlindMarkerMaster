@@ -1,185 +1,131 @@
 # BlindMark Master
 
-A desktop application for batch blind watermarking of images within compressed archives using DWT+DCT frequency-domain algorithms.
+> 桌面端批量盲水印工具，支持对压缩包内文件批量嵌入不可见水印
 
-## Features
+[![Release](https://img.shields.io/github/v/release/Wxl-c137/BlindMarkerMaster)](https://github.com/Wxl-c137/BlindMarkerMaster/releases)
+[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-blue)](#下载)
 
-- 🎯 **Batch Processing**: Watermark all images in .zip, .7z, or .rar archives
-- 🔐 **Secure Watermarking**: MD5-encoded watermarks embedded using DWT+DCT algorithms
-- 📊 **Flexible Input**: Single text or Excel file for sequential watermark mapping
-- 👁️ **Real-time Preview**: Adjustable strength (0.1-1.0) with before/after comparison
-- ⚡ **Parallel Processing**: Utilizes all CPU cores for fast batch operations
-- 🎨 **Modern UI**: Clean interface with dark/light theme support
+**官网**：[https://wxl-c137.github.io/BlindMarkerMaster/](https://wxl-c137.github.io/BlindMarkerMaster/)
 
-## Tech Stack
+---
 
-- **Backend**: Rust + Tauri 2.0
-- **Frontend**: React + TypeScript + Tailwind CSS
-- **Algorithms**: DWT (Discrete Wavelet Transform) + DCT (Discrete Cosine Transform)
+## 功能特性
 
-## Prerequisites
+- **批量处理**：对 `.zip` / `.7z` / `.var` / `.rar` 压缩包内所有目标文件一键嵌入水印
+- **多文件类型**：同时支持 JSON / VAJ / VMI 数据文件与 PNG 图片盲水印
+- **三种编码**：MD5 哈希（不可逆）、明文、AES-256-GCM 加密
+- **Excel 批量**：Excel 按行映射，第 N 行对应第 N 个文件，自动顺序处理
+- **水印混淆**：随机字段名并插入既有字段旁，提高隐蔽性
+- **多核并行**：基于 Rayon，自动利用全部 CPU 核心
+- **高速模式**：大图仅处理左上角 512×512 区域，速度提升 4–10 倍
+- **水印提取**：从已处理压缩包中还原水印内容
 
-### Required Software
-- **Rust**: Install from https://rustup.rs/
-- **Node.js**: Version 18 or higher
-- **System Dependencies**:
-  ```bash
-  # macOS
-  brew install 7zip
+## 下载
 
-  # Ubuntu/Debian
-  sudo apt-get install p7zip-full unrar
+前往 [Releases 页面](https://github.com/Wxl-c137/BlindMarkerMaster/releases) 下载对应平台安装包：
 
-  # Windows
-  # Install 7-Zip and WinRAR manually
-  ```
+| 文件 | 平台 |
+|------|------|
+| `*_aarch64.dmg` | macOS Apple Silicon（M1/M2/M3/M4） |
+| `*_x64.dmg` | macOS Intel |
+| `*_x64-setup.exe` | Windows 64 位（推荐） |
+| `*_x64_en-US.msi` | Windows 64 位（MSI） |
 
-## Installation
+> **macOS 首次启动**：若提示「无法验证开发者」，前往 **系统设置 → 隐私与安全性** 点击「仍要打开」。
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd blindmarktool
-   ```
+## 快速上手
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+### 嵌入水印
 
-3. **Run development server**
-   ```bash
-   npm run tauri dev
-   ```
+1. 切换到 **添加水印** 标签页
+2. 拖入或点击选择压缩包（`.zip` / `.7z` / `.var` / `.rar`）
+3. 选择水印来源：**固定文本** 或 **Excel 批量**
+4. 选择编码方式（默认 MD5）
+5. 勾选需要处理的文件类型（JSON / VAJ / VMI / 图片）
+6. 点击 **开始添加水印**
 
-## Development
+### 提取水印
 
-### Project Structure
+1. 切换到 **提取水印** 标签页
+2. 拖入已处理的压缩包
+3. 点击 **开始提取**，查看水印内容
+
+### 输出文件结构
+
+输出文件保存在以水印文本命名的子文件夹内，原始文件不受影响：
+
 ```
-blindmarktool/
-├── src/                    # React frontend
-├── src-tauri/              # Rust backend
-│   ├── src/
-│   │   ├── commands/       # Tauri commands
-│   │   ├── core/           # Core algorithms
-│   │   ├── models/         # Data structures
-│   │   └── utils/          # Utilities
-├── CLAUDE.md               # Development guide for Claude Code
-└── README.md               # This file
+输出目录/
+└── <水印文本>/
+    └── 原文件名.zip
 ```
 
-### Build Commands
+Excel 批量模式下每行水印对应一个独立子文件夹：
+
+```
+输出目录/
+├── 张三/
+│   └── data.zip
+├── 李四/
+│   └── data.zip
+└── 王五/
+    └── data.zip
+```
+
+## 技术栈
+
+| 层级 | 技术 |
+|------|------|
+| 后端 | Rust · Tauri 2.0 |
+| 前端 | React · TypeScript · Tailwind CSS |
+| 图片水印 | DWT（Haar 小波）+ DCT（8×8 块） |
+| 数据水印 | 字段注入（MD5 / 明文 / AES-256-GCM） |
+| 并行 | Rayon |
+| 压缩包 | zip · sevenz-rust · unrar |
+
+## 本地开发
+
+### 环境要求
+
+- Rust（[rustup.rs](https://rustup.rs/)）
+- Node.js 18+
+- macOS：`brew install 7zip`
+- Linux：`sudo apt-get install p7zip-full unrar`
+- Windows：安装 7-Zip 和 WinRAR
+
+### 启动开发环境
 
 ```bash
-# Development mode
+git clone https://github.com/Wxl-c137/BlindMarkerMaster.git
+cd BlindMarkerMaster
+npm install
 npm run tauri dev
-
-# Production build
-npm run tauri build
-
-# Run tests
-cd src-tauri && cargo test
-
-# Frontend only (without Tauri)
-npm run dev
 ```
 
-## Usage
+### 构建生产包
 
-### Single Text Watermark
-1. Open the application
-2. Select "Single Text" mode
-3. Enter your watermark text
-4. Drag and drop a .zip/.7z/.rar file
-5. Adjust strength slider (0.1-1.0)
-6. Click "Process"
-7. Output file will be saved as `filename_watermarked.zip`
+```bash
+npm run tauri build
+```
 
-### Excel Watermark Mapping
-1. Prepare an Excel file (.xlsx) with watermark texts in the first column
-2. Select "Excel File" mode
-3. Choose your Excel file
-4. Drag and drop an archive
-5. Files will be watermarked sequentially (Row 1 → File 1, Row 2 → File 2, etc.)
+### 发布新版本
 
-### Watermark Extraction
-1. Select "Extract" mode
-2. Choose a watermarked image
-3. The embedded MD5 hash will be displayed
+```bash
+# 自动更新版本号、打 tag、推送，触发 GitHub Actions 自动构建
+./release.sh 0.2.0
+```
 
-## How It Works
+## 支持格式
 
-### Watermarking Algorithm
-1. **Encoding**: Input text → MD5 hash → 128-bit binary sequence
-2. **Decomposition**: Apply 2-level Haar wavelet transform (DWT) to image
-3. **Transform**: Apply DCT to mid-frequency subband in 8x8 blocks
-4. **Embedding**: Modify mid-frequency DCT coefficients based on binary sequence
-5. **Reconstruction**: Inverse DCT → Inverse DWT → Watermarked image
+### 压缩包
+✅ ZIP · ✅ 7Z · ✅ VAR · ✅ RAR
 
-The watermark is embedded in the frequency domain, making it robust against:
-- JPEG compression
-- Scaling/resizing
-- Noise addition
-- Minor image modifications
+### 数据文件
+✅ JSON · ✅ VAJ · ✅ VMI
 
-### Archive Processing
-1. Extract archive to temporary disk directory
-2. Recursively scan for PNG/JPEG/JPG images
-3. Process images in parallel using all CPU cores
-4. Repackage into new archive with `_watermarked` suffix
-5. Preserve exact directory structure
+### 图片
+✅ PNG（盲水印）· JPG/JPEG（原样保留，不支持频域水印）
 
-## Supported Formats
+---
 
-### Archive Formats
-- ✅ ZIP (.zip)
-- 🔄 7-Zip (.7z) - In development
-- 🔄 RAR (.rar) - In development
-
-### Image Formats
-- ✅ PNG (.png)
-- ✅ JPEG (.jpg, .jpeg)
-
-## Development Status
-
-This project is currently under active development. See [CLAUDE.md](CLAUDE.md) for detailed implementation status and developer guidance.
-
-### Completed ✅
-- Project initialization and configuration
-- Data models and type definitions
-- MD5 encoder/decoder with tests
-- Project structure and module organization
-
-### In Progress ⏳
-- DWT processor implementation
-- DCT processor implementation
-- Complete watermark embedding pipeline
-- Archive handling (ZIP/7z/RAR)
-- Frontend UI components
-
-## Performance
-
-- **Parallel Processing**: Utilizes all CPU cores via Rayon
-- **Memory Efficient**: Disk-based temporary workspace for large archives
-- **Fast**: Processes typical images (2-5MP) in ~1-2 seconds per image
-
-## Security
-
-- Validates file paths to prevent directory traversal
-- Limits archive extraction size to prevent zip bombs
-- Sanitizes Excel input
-- Uses Tauri's capability system for file system access control
-
-## License
-
-[Add your license here]
-
-## Contributing
-
-Contributions are welcome! Please see [CLAUDE.md](CLAUDE.md) for development guidelines.
-
-## Acknowledgments
-
-- DWT implementation using [omni-wave](https://crates.io/crates/omni-wave)
-- DCT implementation using [rustdct](https://crates.io/crates/rustdct)
-- Built with [Tauri](https://tauri.app/)
+*by lulu*
