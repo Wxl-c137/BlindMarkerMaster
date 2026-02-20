@@ -48,23 +48,53 @@
       z-index: 1;
     }
 
-    /* ── Neon glow ── */
+    /* ── Neon glow + pulse ── */
+    @keyframes neon-pulse {
+      0%,100% {
+        text-shadow:
+          0 0 8px  rgba(0,245,255,0.9),
+          0 0 25px rgba(0,245,255,0.5),
+          0 0 55px rgba(0,245,255,0.2);
+      }
+      50% {
+        text-shadow:
+          0 0 14px rgba(0,245,255,1),
+          0 0 40px rgba(0,245,255,0.75),
+          0 0 90px rgba(0,245,255,0.35),
+          0 0 160px rgba(0,245,255,0.12);
+      }
+    }
     .neon-cyan {
       color: var(--cyan);
       text-shadow:
         0 0 8px  rgba(0,245,255,0.9),
         0 0 25px rgba(0,245,255,0.5),
         0 0 55px rgba(0,245,255,0.2);
+      animation: neon-pulse 3s ease-in-out infinite;
     }
 
     /* ── Glitch ── */
     @keyframes glitch {
-      0%,88%,100% { transform: translate(0); filter: none; }
-      89% { transform: translate(-3px,1px); filter: hue-rotate(90deg); clip-path: polygon(0 15%,100% 15%,100% 35%,0 35%); }
-      91% { transform: translate(3px,-1px); filter: hue-rotate(-90deg); clip-path: polygon(0 55%,100% 55%,100% 75%,0 75%); }
-      93% { transform: translate(0); filter: none; clip-path: none; }
+      /* 长时间静止 */
+      0%,87%,100% { transform:translate(0,0); clip-path:none; }
+      /* 第一轮爆发：快速扫描线切割 */
+      87.4% { transform:translate(-5px, 0);   clip-path:inset(8%  0 88% 0); }
+      87.8% { transform:translate( 5px, 0);   clip-path:inset(60% 0 31% 0); }
+      88.2% { transform:translate(-3px, 1px); clip-path:inset(36% 0 55% 0); }
+      88.6% { transform:translate( 3px,-1px); clip-path:inset(75% 0 15% 0); }
+      89.0% { transform:translate(0,0);       clip-path:none; }
+      /* 短暂静止 */
+      90.5% { transform:translate(0,0); clip-path:none; }
+      /* 第二轮爆发：更大偏移 */
+      90.9% { transform:translate( 7px, 0);   clip-path:inset(22% 0 70% 0); }
+      91.3% { transform:translate(-6px, 1px); clip-path:inset(52% 0 40% 0); }
+      91.7% { transform:translate( 4px,-1px); clip-path:inset(12% 0 82% 0); }
+      92.1% { transform:translate(0,0);       clip-path:none; }
     }
-    .glitch { animation: glitch 6s infinite; }
+    .glitch {
+      animation: glitch 8s steps(1) infinite;
+      will-change: transform, clip-path;
+    }
 
     /* ── Grid bg ── */
     .grid-bg {
@@ -185,7 +215,7 @@
 
     /* ── Reduced motion ── */
     @media (prefers-reduced-motion: reduce) {
-      .glitch, .c3 { animation:none; }
+      .glitch, .c3, .neon-cyan { animation:none; }
       .rv { opacity:1; transform:none; transition:none; }
       .card-c:hover,.card-p:hover,.btn-cta:hover,.btn-ghost:hover { transform:none; }
     }
