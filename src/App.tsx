@@ -480,10 +480,11 @@ function App() {
             {/* Pixel art isometric cube icon */}
             <div className="cube-icon-wrap shrink-0 mt-1">
               <svg className="px-cube" width="24" height="24" viewBox="0 0 24 24" style={{display:'block',margin:'6px'}}>
-                <polygon className="px-top"   points="12,0 24,6 12,12 0,6"    stroke="rgba(180,255,255,.6)"  strokeWidth="1"/>
-                <polygon className="px-left"  points="0,6 12,12 12,24 0,18"   stroke="rgba(200,160,255,.35)" strokeWidth="1"/>
-                <polygon className="px-right" points="12,12 24,6 24,18 12,24" stroke="rgba(140,90,220,.28)"  strokeWidth="1"/>
-                <polygon className="px-shine" points="12,1 18,4 15,7 9,4"/>
+                <polygon className="px-top"       points="12,0 24,6 12,12 0,6"    stroke="rgba(180,255,255,.6)"  strokeWidth="1"/>
+                <polygon className="px-left"      points="0,6 12,12 12,24 0,18"   stroke="rgba(200,160,255,.35)" strokeWidth="1"/>
+                <polygon className="px-right"     points="12,12 24,6 24,18 12,24" stroke="rgba(140,90,220,.28)"  strokeWidth="1"/>
+                <polygon className="px-shine"     points="12,1 18,4 15,7 9,4"/>
+                <polygon className="px-edge-glow" points="12,0 24,6 24,18 12,24 0,18 0,6"/>
               </svg>
             </div>
             <div>
