@@ -119,12 +119,18 @@ body::after {
   display: block;
   shape-rendering: crispEdges;
   overflow: visible;
-  filter: drop-shadow(0 0 3px rgba(0,245,255,.85)) drop-shadow(0 0 9px rgba(0,245,255,.32));
+  /* 青+紫双色光晕，与站点主色一致 */
+  filter: drop-shadow(0 0 3px rgba(0,245,255,.88))
+          drop-shadow(0 0 10px rgba(0,245,255,.32))
+          drop-shadow(0 0 18px rgba(168,85,247,.22));
 }
 
+/* 顶面：品牌青  左面：品牌紫  右面：深紫 */
 .px-top   { fill: #00f5ff; }
-.px-left  { fill: #007a8f; }
-.px-right { fill: #004055; }
+.px-left  { fill: #7c3aed; }
+.px-right { fill: #3b1d8a; }
+/* 顶面像素高光块 */
+.px-shine { fill: rgba(255,255,255,.22); }
 
 /* 分解重组逐帧动画 — 6帧 step-end 跳帧 */
 .px-cube .px-top   { animation: px-asm-top   3.6s step-end infinite; }
@@ -154,11 +160,13 @@ body::after {
 }
 
 /* ── Light mode pixel cube ───────────────────────── */
-.light .px-top   { fill: #6366f1; }
-.light .px-left  { fill: #4338a0; }
-.light .px-right { fill: #2d2570; }
+.light .px-top   { fill: #0ea5e9; }
+.light .px-left  { fill: #7c3aed; }
+.light .px-right { fill: #3b1d8a; }
 .light .px-cube {
-  filter: drop-shadow(0 0 3px rgba(99,102,241,.85)) drop-shadow(0 0 9px rgba(99,102,241,.32));
+  filter: drop-shadow(0 0 3px rgba(14,165,233,.85))
+          drop-shadow(0 0 10px rgba(14,165,233,.3))
+          drop-shadow(0 0 18px rgba(124,58,237,.22));
 }
 
 
