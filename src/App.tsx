@@ -490,11 +490,12 @@ function App() {
               </div>
             </div>
             <div>
-            <h1 className="font-orbitron text-2xl font-bold tracking-tight mb-1">
+            <h1 className="font-orbitron text-2xl font-bold tracking-tight mb-0.5">
               <span style={{ color: '#00f5ff', textShadow: '0 0 10px rgba(0,245,255,0.8), 0 0 20px rgba(0,245,255,0.4)' }}>BLIND</span>
               <span style={{ color: t.text }}>MARK </span>
               <span style={{ color: '#ff0080', textShadow: '0 0 10px rgba(255,0,128,0.8), 0 0 20px rgba(255,0,128,0.4)' }}>MASTER</span>
             </h1>
+            <p className="text-xs mb-1" style={{ color: t.textFaint, letterSpacing: '0.06em' }}>by lulu</p>
             <div className="flex items-center gap-3 mt-0.5">
               <p className="text-sm" style={{ color: t.textMuted }}>
                 JSON / VAJ / VMI · 图片盲水印 · 支持 .zip .7z .var .rar
