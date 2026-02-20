@@ -113,7 +113,6 @@ body::after {
   height: 36px;
   perspective: 120px;
   display: inline-block;
-  image-rendering: pixelated;
 }
 
 .cube-3d {
@@ -122,80 +121,57 @@ body::after {
   position: relative;
   transform-style: preserve-3d;
   margin: 8px;
-  /* steps(12) = 30° per jump → 像素跳帧感 */
-  animation: cube-spin 4s steps(12, end) infinite;
+  animation: cube-spin 6s linear infinite;
   will-change: transform;
 }
 
+/* 所有面：深色玻璃 + conic 彩虹棱边 */
 .cube-face {
   position: absolute;
   width: 20px;
   height: 20px;
-  border: 2px solid;
+  border: 2px solid transparent;
+  border-radius: 2px;
 }
 
-/* ── Pixel grid helper ──────────────────────────── */
-/* 5px 网格线叠在基础色之上，模拟低分辨率像素屏幕 */
-
-/* Cyan front face */
 .face-front {
   transform: translateZ(10px);
   background:
-    repeating-linear-gradient(0deg,  rgba(0,245,255,.08) 0 1px, transparent 1px 5px),
-    repeating-linear-gradient(90deg, rgba(0,245,255,.08) 0 1px, transparent 1px 5px),
-    rgba(0, 245, 255, 0.10);
-  border-color: rgba(0, 245, 255, 0.9);
-  box-shadow:
-    0 0 2px rgba(0,245,255,1),
-    0 0 6px rgba(0,245,255,.7),
-    0 0 14px rgba(0,245,255,.35),
-    inset 0 0 6px rgba(0,245,255,.12);
+    rgba(3,3,18,.92) padding-box,
+    conic-gradient(from 20deg at 50% 50%, #00f5ff, #7c3aed, #ec4899, #22d3ee, #f97316, #00f5ff) border-box;
+  box-shadow: 0 0 5px rgba(0,245,255,.4), 0 0 14px rgba(0,245,255,.2), 0 0 22px rgba(168,85,247,.15);
 }
-/* Dim rear face */
 .face-back {
   transform: rotateY(180deg) translateZ(10px);
-  background: rgba(0, 245, 255, 0.03);
-  border-color: rgba(0, 245, 255, 0.18);
+  background:
+    rgba(1,1,12,.94) padding-box,
+    conic-gradient(from 200deg at 50% 50%, #00f5ff, #7c3aed, #ec4899, #22d3ee, #00f5ff) border-box;
 }
-/* Purple left face */
 .face-left {
   transform: rotateY(-90deg) translateZ(10px);
   background:
-    repeating-linear-gradient(0deg,  rgba(168,85,247,.08) 0 1px, transparent 1px 5px),
-    repeating-linear-gradient(90deg, rgba(168,85,247,.08) 0 1px, transparent 1px 5px),
-    rgba(168, 85, 247, 0.10);
-  border-color: rgba(168, 85, 247, 0.9);
-  box-shadow:
-    0 0 2px rgba(168,85,247,1),
-    0 0 6px rgba(168,85,247,.6),
-    0 0 14px rgba(168,85,247,.3),
-    inset 0 0 6px rgba(168,85,247,.12);
+    rgba(3,3,18,.88) padding-box,
+    conic-gradient(from 110deg at 50% 50%, #7c3aed, #ec4899, #22d3ee, #00f5ff, #7c3aed) border-box;
+  box-shadow: 0 0 5px rgba(168,85,247,.38), 0 0 12px rgba(168,85,247,.18);
 }
-/* Dim right face */
 .face-right {
   transform: rotateY(90deg) translateZ(10px);
-  background: rgba(168, 85, 247, 0.03);
-  border-color: rgba(168, 85, 247, 0.18);
+  background:
+    rgba(3,3,18,.82) padding-box,
+    conic-gradient(from 290deg at 50% 50%, #22d3ee, #00f5ff, #7c3aed, #ec4899, #22d3ee) border-box;
 }
-/* Pink top face */
 .face-top {
   transform: rotateX(90deg) translateZ(10px);
   background:
-    repeating-linear-gradient(0deg,  rgba(255,0,128,.08) 0 1px, transparent 1px 5px),
-    repeating-linear-gradient(90deg, rgba(255,0,128,.08) 0 1px, transparent 1px 5px),
-    rgba(255, 0, 128, 0.10);
-  border-color: rgba(255, 0, 128, 0.85);
-  box-shadow:
-    0 0 2px rgba(255,0,128,1),
-    0 0 6px rgba(255,0,128,.6),
-    0 0 14px rgba(255,0,128,.3),
-    inset 0 0 6px rgba(255,0,128,.12);
+    rgba(3,3,18,.86) padding-box,
+    conic-gradient(from 45deg at 50% 50%, #00f5ff, #22d3ee, #f97316, #ec4899, #7c3aed, #00f5ff) border-box;
+  box-shadow: 0 0 5px rgba(244,63,94,.35), 0 0 12px rgba(244,63,94,.18);
 }
-/* Dark bottom face */
 .face-bottom {
   transform: rotateX(-90deg) translateZ(10px);
-  background: rgba(0, 0, 0, 0.6);
-  border-color: rgba(255, 255, 255, 0.06);
+  background:
+    rgba(1,1,10,.97) padding-box,
+    conic-gradient(from 225deg at 50% 50%, #7c3aed, #22d3ee, #00f5ff, #ec4899, #7c3aed) border-box;
 }
 
 @keyframes cube-spin {
@@ -206,51 +182,36 @@ body::after {
 /* ── Light mode cube overrides ───────────────────── */
 .light .face-front {
   background:
-    repeating-linear-gradient(0deg,  rgba(99,102,241,.07) 0 1px, transparent 1px 5px),
-    repeating-linear-gradient(90deg, rgba(99,102,241,.07) 0 1px, transparent 1px 5px),
-    rgba(99, 102, 241, 0.08);
-  border-color: rgba(99, 102, 241, 0.85);
-  box-shadow:
-    0 0 2px rgba(99,102,241,1),
-    0 0 6px rgba(99,102,241,.5),
-    0 0 14px rgba(99,102,241,.25),
-    inset 0 0 6px rgba(99,102,241,.1);
+    rgba(240,245,255,.92) padding-box,
+    conic-gradient(from 20deg at 50% 50%, #6366f1, #8b5cf6, #ec4899, #3b82f6, #06b6d4, #6366f1) border-box;
+  box-shadow: 0 0 5px rgba(99,102,241,.45), 0 0 14px rgba(99,102,241,.22);
 }
 .light .face-back {
-  background: rgba(99, 102, 241, 0.03);
-  border-color: rgba(99, 102, 241, 0.15);
+  background:
+    rgba(230,235,255,.88) padding-box,
+    conic-gradient(from 200deg at 50% 50%, #6366f1, #8b5cf6, #ec4899, #3b82f6, #6366f1) border-box;
 }
 .light .face-left {
   background:
-    repeating-linear-gradient(0deg,  rgba(139,92,246,.07) 0 1px, transparent 1px 5px),
-    repeating-linear-gradient(90deg, rgba(139,92,246,.07) 0 1px, transparent 1px 5px),
-    rgba(139, 92, 246, 0.08);
-  border-color: rgba(139, 92, 246, 0.85);
-  box-shadow:
-    0 0 2px rgba(139,92,246,1),
-    0 0 6px rgba(139,92,246,.5),
-    0 0 14px rgba(139,92,246,.25),
-    inset 0 0 6px rgba(139,92,246,.1);
+    rgba(235,230,255,.88) padding-box,
+    conic-gradient(from 110deg at 50% 50%, #8b5cf6, #ec4899, #3b82f6, #6366f1, #8b5cf6) border-box;
+  box-shadow: 0 0 5px rgba(139,92,246,.4), 0 0 12px rgba(139,92,246,.2);
 }
 .light .face-right {
-  background: rgba(139, 92, 246, 0.03);
-  border-color: rgba(139, 92, 246, 0.15);
+  background:
+    rgba(235,230,255,.82) padding-box,
+    conic-gradient(from 290deg at 50% 50%, #3b82f6, #6366f1, #8b5cf6, #ec4899, #3b82f6) border-box;
 }
 .light .face-top {
   background:
-    repeating-linear-gradient(0deg,  rgba(225,29,72,.07) 0 1px, transparent 1px 5px),
-    repeating-linear-gradient(90deg, rgba(225,29,72,.07) 0 1px, transparent 1px 5px),
-    rgba(225, 29, 72, 0.08);
-  border-color: rgba(225, 29, 72, 0.75);
-  box-shadow:
-    0 0 2px rgba(225,29,72,1),
-    0 0 6px rgba(225,29,72,.5),
-    0 0 14px rgba(225,29,72,.25),
-    inset 0 0 6px rgba(225,29,72,.1);
+    rgba(240,230,245,.86) padding-box,
+    conic-gradient(from 45deg at 50% 50%, #6366f1, #3b82f6, #f97316, #ec4899, #8b5cf6, #6366f1) border-box;
+  box-shadow: 0 0 5px rgba(225,29,72,.35), 0 0 12px rgba(225,29,72,.18);
 }
 .light .face-bottom {
-  background: rgba(0, 0, 0, 0.06);
-  border-color: rgba(0, 0, 0, 0.08);
+  background:
+    rgba(220,225,255,.95) padding-box,
+    conic-gradient(from 225deg at 50% 50%, #8b5cf6, #3b82f6, #6366f1, #ec4899, #8b5cf6) border-box;
 }
 
 

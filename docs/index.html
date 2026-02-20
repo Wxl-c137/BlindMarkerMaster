@@ -8,7 +8,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;400;500;600;700&family=Russo+One&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;400;500;600;700&family=Russo+One&family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg:     #07071a;
@@ -178,34 +178,47 @@
     .sline { width:2px; background:linear-gradient(180deg,rgba(0,245,255,.45),rgba(168,85,247,.35)); }
 
     /* ── 3D Cube ── */
-    .cw { perspective:220px; display:inline-block; image-rendering:pixelated; }
-    .c3 { position:relative; transform-style:preserve-3d; animation:cspin 4s steps(12,end) infinite; will-change:transform; }
-    .cf { position:absolute; border:2px solid; }
-    /* 亮面：10px 像素网格 + 阶梯霓虹光 */
-    .cf-fr { transform:translateZ(var(--tz));
+    .cw { display:inline-block; }
+    .c3 { position:relative; transform-style:preserve-3d; animation:cspin 8s linear infinite; will-change:transform; }
+    .cf { position:absolute; border:2px solid transparent; border-radius:8px; }
+
+    /* 正面：扫描线 + 深色玻璃 + 彩虹棱边 + 居中文字 */
+    .cf-fr {
+      transform:translateZ(var(--tz));
       background:
-        repeating-linear-gradient(0deg,  rgba(0,245,255,.07) 0 1px,transparent 1px 10px),
-        repeating-linear-gradient(90deg, rgba(0,245,255,.07) 0 1px,transparent 1px 10px),
-        rgba(0,245,255,.08);
-      border-color:rgba(0,245,255,.9);
-      box-shadow:0 0 2px rgba(0,245,255,1),0 0 8px rgba(0,245,255,.65),0 0 20px rgba(0,245,255,.3),inset 0 0 10px rgba(0,245,255,.07); }
-    .cf-bk { transform:rotateY(180deg) translateZ(var(--tz)); background:rgba(0,245,255,.03);  border-color:rgba(0,245,255,.2); }
-    .cf-lt { transform:rotateY(-90deg) translateZ(var(--tz));
+        repeating-linear-gradient(0deg, rgba(0,0,0,.14) 0 1px, transparent 1px 3px) padding-box,
+        rgba(3,3,18,.92) padding-box,
+        conic-gradient(from 20deg at 50% 50%, #00f5ff, #7c3aed, #ec4899, #22d3ee, #f97316, #00f5ff) border-box;
+      box-shadow:0 0 4px rgba(255,255,255,.15), 0 0 16px rgba(0,245,255,.28), 0 0 35px rgba(168,85,247,.18);
+      display:flex; align-items:center; justify-content:center; }
+    .cf-bk {
+      transform:rotateY(180deg) translateZ(var(--tz));
       background:
-        repeating-linear-gradient(0deg,  rgba(168,85,247,.07) 0 1px,transparent 1px 10px),
-        repeating-linear-gradient(90deg, rgba(168,85,247,.07) 0 1px,transparent 1px 10px),
-        rgba(168,85,247,.08);
-      border-color:rgba(168,85,247,.85);
-      box-shadow:0 0 2px rgba(168,85,247,1),0 0 8px rgba(168,85,247,.55),0 0 18px rgba(168,85,247,.25); }
-    .cf-rt { transform:rotateY(90deg)  translateZ(var(--tz)); background:rgba(168,85,247,.03); border-color:rgba(168,85,247,.22); }
-    .cf-tp { transform:rotateX(90deg)  translateZ(var(--tz));
+        rgba(1,1,12,.94) padding-box,
+        conic-gradient(from 200deg at 50% 50%, #00f5ff, #7c3aed, #ec4899, #22d3ee, #00f5ff) border-box; }
+    .cf-lt {
+      transform:rotateY(-90deg) translateZ(var(--tz));
       background:
-        repeating-linear-gradient(0deg,  rgba(244,63,94,.07) 0 1px,transparent 1px 10px),
-        repeating-linear-gradient(90deg, rgba(244,63,94,.07) 0 1px,transparent 1px 10px),
-        rgba(244,63,94,.08);
-      border-color:rgba(244,63,94,.8);
-      box-shadow:0 0 2px rgba(244,63,94,1),0 0 8px rgba(244,63,94,.55),0 0 18px rgba(244,63,94,.25); }
-    .cf-bt { transform:rotateX(-90deg) translateZ(var(--tz)); background:rgba(0,0,0,.45);      border-color:rgba(255,255,255,.06); }
+        rgba(3,3,18,.88) padding-box,
+        conic-gradient(from 110deg at 50% 50%, #7c3aed, #ec4899, #22d3ee, #00f5ff, #7c3aed) border-box;
+      box-shadow:0 0 3px rgba(255,255,255,.1), 0 0 12px rgba(168,85,247,.32); }
+    .cf-rt {
+      transform:rotateY(90deg) translateZ(var(--tz));
+      background:
+        rgba(3,3,18,.82) padding-box,
+        conic-gradient(from 290deg at 50% 50%, #22d3ee, #00f5ff, #7c3aed, #ec4899, #22d3ee) border-box; }
+    .cf-tp {
+      transform:rotateX(90deg) translateZ(var(--tz));
+      background:
+        rgba(3,3,18,.86) padding-box,
+        conic-gradient(from 45deg at 50% 50%, #00f5ff, #22d3ee, #f97316, #ec4899, #7c3aed, #00f5ff) border-box;
+      box-shadow:0 0 3px rgba(255,255,255,.1), 0 0 12px rgba(244,63,94,.28); }
+    .cf-bt {
+      transform:rotateX(-90deg) translateZ(var(--tz));
+      background:
+        rgba(1,1,10,.97) padding-box,
+        conic-gradient(from 225deg at 50% 50%, #7c3aed, #22d3ee, #00f5ff, #ec4899, #7c3aed) border-box; }
+
     @keyframes cspin {
       from { transform: rotateY(0deg)   rotateX(-22deg); }
       to   { transform: rotateY(360deg) rotateX(-22deg); }
@@ -293,14 +306,16 @@
 
     <!-- Hero cube -->
     <div class="flex justify-center mb-9" aria-hidden="true">
-      <div class="cw" style="width:90px;height:90px;">
-        <div class="c3" style="width:50px;height:50px;margin:20px;--tz:25px;">
-          <div class="cf cf-fr" style="width:50px;height:50px;"></div>
-          <div class="cf cf-bk" style="width:50px;height:50px;"></div>
-          <div class="cf cf-lt" style="width:50px;height:50px;"></div>
-          <div class="cf cf-rt" style="width:50px;height:50px;"></div>
-          <div class="cf cf-tp" style="width:50px;height:50px;"></div>
-          <div class="cf cf-bt" style="width:50px;height:50px;"></div>
+      <div class="cw" style="width:200px;height:200px;perspective:500px;">
+        <div class="c3" style="width:160px;height:160px;margin:20px;--tz:80px;">
+          <div class="cf cf-fr" style="width:160px;height:160px;">
+            <span style="font-family:'Press Start 2P',monospace;font-size:26px;color:#fff;letter-spacing:4px;user-select:none;text-shadow:0 0 4px #fff,0 0 16px rgba(0,245,255,.95),0 0 32px rgba(0,245,255,.6),0 0 60px rgba(168,85,247,.4);">lulu</span>
+          </div>
+          <div class="cf cf-bk" style="width:160px;height:160px;"></div>
+          <div class="cf cf-lt" style="width:160px;height:160px;"></div>
+          <div class="cf cf-rt" style="width:160px;height:160px;"></div>
+          <div class="cf cf-tp" style="width:160px;height:160px;"></div>
+          <div class="cf cf-bt" style="width:160px;height:160px;"></div>
         </div>
       </div>
     </div>
