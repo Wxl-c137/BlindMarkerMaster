@@ -45,8 +45,8 @@ echo "  更新 src-tauri/tauri.conf.json ..."
 sed -i '' "s/\"version\": \"[^\"]*\"/\"version\": \"${VERSION}\"/" src-tauri/tauri.conf.json
 
 echo "  更新 src-tauri/Cargo.toml ..."
-# 只替换 [package] 段的 version，避免误改依赖版本
-sed -i '' "0,/^version = \"[^\"]*\"/{s/^version = \"[^\"]*\"/version = \"${VERSION}\"/}" src-tauri/Cargo.toml
+# 只替换第一个 version = "..."（[package] 段），避免误改依赖版本
+perl -i '' -pe 'if (!$done && /^version = /) { s/^version = "[^"]*"/version = "'"${VERSION}"'"/; $done = 1; }' src-tauri/Cargo.toml
 
 # ── Cargo.lock 同步 ───────────────────────────
 # (如未被 .gitignore 忽略则更新)
