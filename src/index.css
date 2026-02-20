@@ -125,59 +125,94 @@ body::after {
   will-change: transform;
 }
 
-/* 所有面：透明玻璃 + 高光 + conic 彩虹棱边 */
+/* 所有面：透明玻璃 + 折射(backdrop-filter) + 散射(inset glow) + 色散(chromatic shadow) */
 .cube-face {
   position: absolute;
   width: 20px;
   height: 20px;
   border: 2px solid transparent;
   border-radius: 2px;
+  /* 折射：模糊并饱和背景，模拟光线穿过玻璃的弯折 */
+  backdrop-filter: blur(1px) saturate(1.15);
 }
 
 .face-front {
   transform: translateZ(10px);
   background:
+    /* 焦散散射点：光穿透玻璃在对角形成的亮斑 */
+    radial-gradient(ellipse at 74% 76%, rgba(0,245,255,.10) 0%, transparent 40%) padding-box,
+    /* Fresnel 边缘增亮：掠射角反射率更高 */
+    radial-gradient(ellipse at 50% 50%, transparent 36%, rgba(120,80,220,.07) 100%) padding-box,
+    /* 主高光 */
     radial-gradient(ellipse at 28% 22%, rgba(255,255,255,.18) 0%, transparent 52%) padding-box,
     linear-gradient(145deg, rgba(255,255,255,.07) 0%, transparent 42%) padding-box,
-    rgba(8,8,28,.26) padding-box,
+    rgba(8,8,28,.24) padding-box,
     conic-gradient(from 20deg at 50% 50%, #00f5ff, #7c3aed, #ec4899, #22d3ee, #f97316, #00f5ff) border-box;
-  box-shadow: 0 0 5px rgba(0,245,255,.4), 0 0 14px rgba(0,245,255,.2), 0 0 22px rgba(168,85,247,.15);
+  box-shadow:
+    /* 色散：红/青分离模拟不同波长折射角度差 */
+    -1px 0 3px rgba(236,72,153,.32),
+    1px 0 3px rgba(0,245,255,.32),
+    0 0 5px rgba(0,245,255,.35),
+    0 0 14px rgba(0,245,255,.18),
+    0 0 22px rgba(168,85,247,.12),
+    /* 内散射：玻璃内部体积散射 */
+    inset 0 0 5px rgba(0,245,255,.08);
 }
 .face-back {
   transform: rotateY(180deg) translateZ(10px);
   background:
+    radial-gradient(ellipse at 30% 28%, rgba(0,245,255,.08) 0%, transparent 45%) padding-box,
     radial-gradient(ellipse at 70% 75%, rgba(255,255,255,.08) 0%, transparent 50%) padding-box,
-    rgba(4,4,18,.24) padding-box,
+    rgba(4,4,18,.22) padding-box,
     conic-gradient(from 200deg at 50% 50%, #00f5ff, #7c3aed, #ec4899, #22d3ee, #00f5ff) border-box;
+  box-shadow: inset 0 0 5px rgba(0,245,255,.05);
 }
 .face-left {
   transform: rotateY(-90deg) translateZ(10px);
   background:
+    radial-gradient(ellipse at 68% 72%, rgba(168,85,247,.10) 0%, transparent 42%) padding-box,
     radial-gradient(ellipse at 30% 25%, rgba(255,255,255,.12) 0%, transparent 55%) padding-box,
-    rgba(6,4,22,.28) padding-box,
+    rgba(6,4,22,.26) padding-box,
     conic-gradient(from 110deg at 50% 50%, #7c3aed, #ec4899, #22d3ee, #00f5ff, #7c3aed) border-box;
-  box-shadow: 0 0 5px rgba(168,85,247,.38), 0 0 12px rgba(168,85,247,.18);
+  box-shadow:
+    0 -1px 3px rgba(168,85,247,.38),
+    0 1px 3px rgba(0,245,255,.28),
+    0 0 5px rgba(168,85,247,.30),
+    0 0 12px rgba(168,85,247,.14),
+    inset 0 0 4px rgba(168,85,247,.08);
 }
 .face-right {
   transform: rotateY(90deg) translateZ(10px);
   background:
+    radial-gradient(ellipse at 30% 30%, rgba(34,211,238,.09) 0%, transparent 42%) padding-box,
     radial-gradient(ellipse at 65% 30%, rgba(255,255,255,.10) 0%, transparent 50%) padding-box,
-    rgba(6,4,22,.24) padding-box,
+    rgba(6,4,22,.22) padding-box,
     conic-gradient(from 290deg at 50% 50%, #22d3ee, #00f5ff, #7c3aed, #ec4899, #22d3ee) border-box;
+  box-shadow:
+    0 -1px 3px rgba(34,211,238,.30),
+    0 1px 3px rgba(168,85,247,.25),
+    inset 0 0 4px rgba(34,211,238,.07);
 }
 .face-top {
   transform: rotateX(90deg) translateZ(10px);
   background:
     radial-gradient(ellipse at 40% 40%, rgba(255,255,255,.20) 0%, transparent 60%) padding-box,
-    rgba(8,6,24,.22) padding-box,
+    rgba(8,6,24,.20) padding-box,
     conic-gradient(from 45deg at 50% 50%, #00f5ff, #22d3ee, #f97316, #ec4899, #7c3aed, #00f5ff) border-box;
-  box-shadow: 0 0 5px rgba(244,63,94,.35), 0 0 12px rgba(244,63,94,.18);
+  box-shadow:
+    -1px 0 3px rgba(244,63,94,.30),
+    1px 0 3px rgba(0,245,255,.25),
+    0 0 5px rgba(244,63,94,.28),
+    0 0 12px rgba(244,63,94,.14),
+    inset 0 0 4px rgba(244,63,94,.08);
 }
 .face-bottom {
   transform: rotateX(-90deg) translateZ(10px);
   background:
-    rgba(2,2,12,.30) padding-box,
+    radial-gradient(ellipse at 50% 50%, rgba(100,60,200,.07) 0%, transparent 60%) padding-box,
+    rgba(2,2,12,.28) padding-box,
     conic-gradient(from 225deg at 50% 50%, #7c3aed, #22d3ee, #00f5ff, #ec4899, #7c3aed) border-box;
+  box-shadow: inset 0 0 4px rgba(100,60,200,.06);
 }
 
 @keyframes cube-spin {
