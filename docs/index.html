@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BlindMark Master — 批量盲水印工具</title>
+  <meta name="description" content="桌面端批量盲水印工具，支持 .zip .7z .var .rar 压缩包，DWT+DCT 频域算法，AES-256-GCM 加密，多核并行处理。">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;400;500;600;700&family=Russo+One&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:     #07071a;
+      --card:   #0d0d23;
+      --cyan:   #00f5ff;
+      --purple: #a855f7;
+      --rose:   #f43f5e;
+      --green:  #00ff88;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: rgba(255,255,255,0.87);
+      font-family: 'Chakra Petch', monospace;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    .heading { font-family: 'Russo One', sans-serif; }
+
+    /* ── Scanlines ── */
+    .scanlines::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(0,0,0,0.12) 3px,
+        rgba(0,0,0,0.12) 4px
+      );
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* ── Neon glow ── */
+    .neon-cyan {
+      color: var(--cyan);
+      text-shadow:
+        0 0 8px  rgba(0,245,255,0.9),
+        0 0 25px rgba(0,245,255,0.5),
+        0 0 55px rgba(0,245,255,0.2);
+    }
+
+    /* ── Glitch ── */
+    @keyframes glitch {
+      0%,88%,100% { transform: translate(0); filter: none; }
+      89% { transform: translate(-3px,1px); filter: hue-rotate(90deg); clip-path: polygon(0 15%,100% 15%,100% 35%,0 35%); }
+      91% { transform: translate(3px,-1px); filter: hue-rotate(-90deg); clip-path: polygon(0 55%,100% 55%,100% 75%,0 75%); }
+      93% { transform: translate(0); filter: none; clip-path: none; }
+    }
+    .glitch { animation: glitch 6s infinite; }
+
+    /* ── Grid bg ── */
+    .grid-bg {
+      background-image:
+        linear-gradient(rgba(0,245,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,245,255,0.025) 1px, transparent 1px);
+      background-size: 44px 44px;
+    }
+
+    /* ── Cards ── */
+    .card-c {
+      background: var(--card);
+      border: 1px solid rgba(0,245,255,0.12);
+      transition: border-color .2s, box-shadow .2s, transform .2s;
+    }
+    .card-c:hover {
+      border-color: rgba(0,245,255,0.4);
+      box-shadow: 0 0 24px rgba(0,245,255,0.08), 0 8px 32px rgba(0,0,0,0.5);
+      transform: translateY(-3px);
+    }
+    .card-p {
+      background: var(--card);
+      border: 1px solid rgba(168,85,247,0.12);
+      transition: border-color .2s, box-shadow .2s, transform .2s;
+    }
+    .card-p:hover {
+      border-color: rgba(168,85,247,0.4);
+      box-shadow: 0 0 24px rgba(168,85,247,0.08), 0 8px 32px rgba(0,0,0,0.5);
+      transform: translateY(-3px);
+    }
+
+    /* ── Buttons ── */
+    .btn-cta {
+      background: linear-gradient(135deg, #00f5ff 0%, #a855f7 100%);
+      color: #07071a;
+      font-family: 'Russo One', sans-serif;
+      letter-spacing: .06em;
+      font-weight: 700;
+      transition: box-shadow .2s, transform .2s;
+    }
+    .btn-cta:hover  { box-shadow: 0 0 32px rgba(0,245,255,0.45); transform: translateY(-2px); }
+    .btn-cta:active { transform: scale(.97); }
+    .btn-cta:focus-visible { outline: 2px solid rgba(0,245,255,0.8); outline-offset: 3px; }
+
+    .btn-ghost {
+      background: rgba(0,245,255,0.06);
+      border: 1px solid rgba(0,245,255,0.35);
+      color: var(--cyan);
+      font-family: 'Russo One', sans-serif;
+      letter-spacing: .06em;
+      transition: background .2s, box-shadow .2s, transform .2s;
+    }
+    .btn-ghost:hover  { background: rgba(0,245,255,0.12); box-shadow: 0 0 18px rgba(0,245,255,0.2); transform: translateY(-2px); }
+    .btn-ghost:active { transform: scale(.97); }
+    .btn-ghost:focus-visible { outline: 2px solid rgba(0,245,255,0.8); outline-offset: 3px; }
+
+    /* ── Tags ── */
+    .tag { display:inline-block; padding:2px 9px; border-radius:4px; font-size:.68rem; font-family:monospace; letter-spacing:.04em; }
+    .tag-c { background:rgba(0,245,255,.08);  border:1px solid rgba(0,245,255,.3);  color:var(--cyan);   }
+    .tag-p { background:rgba(168,85,247,.08); border:1px solid rgba(168,85,247,.3); color:var(--purple); }
+    .tag-g { background:rgba(0,255,136,.08);  border:1px solid rgba(0,255,136,.3);  color:var(--green);  }
+    .tag-r { background:rgba(244,63,94,.08);  border:1px solid rgba(244,63,94,.3);  color:var(--rose);   }
+
+    /* ── Divider ── */
+    .hr { height:1px; background:linear-gradient(90deg,transparent,rgba(0,245,255,.25),rgba(168,85,247,.2),transparent); }
+
+    /* ── Section label ── */
+    .slabel {
+      font-family:'Russo One',sans-serif;
+      font-size:.6rem;
+      letter-spacing:.22em;
+      text-transform:uppercase;
+      color:rgba(0,245,255,.55);
+    }
+
+    /* ── Scroll reveal ── */
+    .rv { opacity:0; transform:translateY(22px); transition:opacity .65s ease, transform .65s ease; }
+    .rv.in { opacity:1; transform:translateY(0); }
+
+    /* ── Step line ── */
+    .sline { width:2px; background:linear-gradient(180deg,rgba(0,245,255,.45),rgba(168,85,247,.35)); }
+
+    /* ── 3D Cube ── */
+    .cw { perspective:220px; display:inline-block; }
+    .c3 { position:relative; transform-style:preserve-3d; animation:cspin 6s linear infinite; }
+    .cf { position:absolute; border:2px solid; }
+    .cf-fr { transform:translateZ(var(--tz)); background:rgba(0,245,255,.1);   border-color:rgba(0,245,255,.9);   box-shadow:0 0 14px rgba(0,245,255,.55),inset 0 0 10px rgba(0,245,255,.08); }
+    .cf-bk { transform:rotateY(180deg) translateZ(var(--tz)); background:rgba(0,245,255,.04);  border-color:rgba(0,245,255,.22); }
+    .cf-lt { transform:rotateY(-90deg) translateZ(var(--tz)); background:rgba(168,85,247,.1);  border-color:rgba(168,85,247,.8);  box-shadow:0 0 10px rgba(168,85,247,.4); }
+    .cf-rt { transform:rotateY(90deg)  translateZ(var(--tz)); background:rgba(168,85,247,.04); border-color:rgba(168,85,247,.25); }
+    .cf-tp { transform:rotateX(90deg)  translateZ(var(--tz)); background:rgba(244,63,94,.1);   border-color:rgba(244,63,94,.7);   box-shadow:0 0 10px rgba(244,63,94,.4); }
+    .cf-bt { transform:rotateX(-90deg) translateZ(var(--tz)); background:rgba(0,0,0,.35);      border-color:rgba(255,255,255,.08); }
+    @keyframes cspin {
+      0%   { transform:rotateY(0deg)   rotateX(-25deg) translateY(0px); }
+      50%  { transform:rotateY(180deg) rotateX(-25deg) translateY(-5px); }
+      100% { transform:rotateY(360deg) rotateX(-25deg) translateY(0px); }
+    }
+
+    /* ── Nav ── */
+    #nav {
+      position:fixed; top:14px;
+      left:50%; transform:translateX(-50%);
+      width:calc(100% - 28px); max-width:1100px;
+      background:rgba(13,13,35,.88);
+      backdrop-filter:blur(14px);
+      border:1px solid rgba(0,245,255,.1);
+      border-radius:14px;
+      padding:11px 22px;
+      z-index:50;
+    }
+
+    /* ── Icon box ── */
+    .ibox {
+      width:44px; height:44px; border-radius:12px;
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0;
+    }
+
+    /* ── Reduced motion ── */
+    @media (prefers-reduced-motion: reduce) {
+      .glitch, .c3 { animation:none; }
+      .rv { opacity:1; transform:none; transition:none; }
+      .card-c:hover,.card-p:hover,.btn-cta:hover,.btn-ghost:hover { transform:none; }
+    }
+
+    /* ── Nav link ── */
+    .nlink {
+      font-size:.75rem; color:rgba(255,255,255,.5);
+      cursor:pointer;
+      transition:color .2s;
+    }
+    .nlink:hover { color:var(--cyan); }
+    .nlink:focus-visible { outline:2px solid rgba(0,245,255,.7); outline-offset:2px; border-radius:3px; }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════ NAV -->
+<nav id="nav" aria-label="主导航">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <!-- mini cube -->
+      <div class="cw" style="width:36px;height:36px;" aria-hidden="true">
+        <div class="c3" style="width:20px;height:20px;margin:8px;--tz:10px;">
+          <div class="cf cf-fr" style="width:20px;height:20px;"></div>
+          <div class="cf cf-bk" style="width:20px;height:20px;"></div>
+          <div class="cf cf-lt" style="width:20px;height:20px;"></div>
+          <div class="cf cf-rt" style="width:20px;height:20px;"></div>
+          <div class="cf cf-tp" style="width:20px;height:20px;"></div>
+          <div class="cf cf-bt" style="width:20px;height:20px;"></div>
+        </div>
+      </div>
+      <span class="heading text-xs" style="color:rgba(255,255,255,.88);letter-spacing:.07em;">BLINDMARK MASTER</span>
+    </div>
+    <div class="flex items-center gap-5">
+      <a href="#features"     class="nlink hidden sm:block">功能</a>
+      <a href="#how-it-works" class="nlink hidden sm:block">用法</a>
+      <a href="#faq"          class="nlink hidden sm:block">FAQ</a>
+      <a href="#download"
+         class="btn-ghost text-xs px-4 py-2 rounded-lg cursor-pointer">
+        下载
+      </a>
+    </div>
+  </div>
+</nav>
+
+
+<!-- ════════════════════════════════════════ HERO -->
+<section class="scanlines relative min-h-screen flex items-center justify-center grid-bg overflow-hidden px-4 pt-28 pb-24">
+
+  <!-- ambient glows -->
+  <div class="absolute inset-0 pointer-events-none" aria-hidden="true"
+       style="background:radial-gradient(ellipse 65% 55% at 50% 38%,rgba(0,245,255,.055) 0%,transparent 70%);"></div>
+  <div class="absolute inset-0 pointer-events-none" aria-hidden="true"
+       style="background:radial-gradient(ellipse 40% 45% at 18% 80%,rgba(168,85,247,.045) 0%,transparent 65%);"></div>
+
+  <div class="relative z-10 text-center max-w-4xl mx-auto">
+
+    <!-- Hero cube -->
+    <div class="flex justify-center mb-9" aria-hidden="true">
+      <div class="cw" style="width:90px;height:90px;">
+        <div class="c3" style="width:50px;height:50px;margin:20px;--tz:25px;">
+          <div class="cf cf-fr" style="width:50px;height:50px;"></div>
+          <div class="cf cf-bk" style="width:50px;height:50px;"></div>
+          <div class="cf cf-lt" style="width:50px;height:50px;"></div>
+          <div class="cf cf-rt" style="width:50px;height:50px;"></div>
+          <div class="cf cf-tp" style="width:50px;height:50px;"></div>
+          <div class="cf cf-bt" style="width:50px;height:50px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <p class="slabel mb-5">Desktop Application · v0.1.0</p>
+
+    <h1 class="glitch heading leading-none mb-5"
+        style="font-size:clamp(3rem,10vw,6rem);letter-spacing:-.02em;">
+      <span class="neon-cyan">BLIND</span><span style="color:rgba(255,255,255,.92);">MARK</span><br>
+      <span style="color:rgba(255,255,255,.92);">MASTER</span>
+    </h1>
+
+    <p class="text-base sm:text-lg mb-2" style="color:rgba(255,255,255,.6);">
+      批量盲水印工具 · 支持 .zip / .7z / .var / .rar
+    </p>
+    <p class="text-sm mb-11" style="color:rgba(255,255,255,.35);">
+      DWT + DCT 频域算法 · 嵌入不可见 · 原文件不变 · 多核并行
+    </p>
+
+    <!-- CTA buttons -->
+    <div class="flex flex-col sm:flex-row gap-3 justify-center items-center mb-11">
+      <a href="https://github.com/Wxl-c137/BlindMarkerMaster/releases"
+         target="_blank" rel="noopener"
+         class="btn-cta flex items-center gap-2.5 px-7 py-3.5 rounded-xl cursor-pointer text-sm"
+         style="min-width:210px;justify-content:center;">
+        <!-- Apple SVG -->
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+        macOS 下载
+      </a>
+      <a href="https://github.com/Wxl-c137/BlindMarkerMaster/releases"
+         target="_blank" rel="noopener"
+         class="btn-ghost flex items-center gap-2.5 px-7 py-3.5 rounded-xl cursor-pointer text-sm"
+         style="min-width:210px;justify-content:center;">
+        <!-- Windows SVG -->
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M3 5.557L10.025 4.5l.004 6.961-7.021.04L3 5.557zm7.025 6.825l.006 6.97L3.003 18.29V11.42l7.022-.038zm.84-8.962L20.999 2v8.505l-10.134.08-.001-7.165zm10.135 8.027l-.001 8.474-10.133-1.424-.015-7.093 10.149.043z"/></svg>
+        Windows 下载
+      </a>
+    </div>
+
+    <!-- Quick tags -->
+    <div class="flex flex-wrap justify-center gap-2">
+      <span class="tag tag-c">ZIP · 7Z · VAR · RAR</span>
+      <span class="tag tag-p">AES-256-GCM</span>
+      <span class="tag tag-g">PNG 图片盲水印</span>
+      <span class="tag tag-r">Excel 批量</span>
+    </div>
+  </div>
+
+  <!-- bottom fade -->
+  <div class="absolute bottom-0 left-0 right-0 h-36 pointer-events-none"
+       aria-hidden="true"
+       style="background:linear-gradient(transparent,#07071a);"></div>
+</section>
+
+<div class="hr"></div>
+
+
+<!-- ════════════════════════════════════════ FEATURES -->
+<section id="features" class="py-28 px-4">
+  <div class="max-w-6xl mx-auto">
+
+    <div class="text-center mb-16 rv">
+      <p class="slabel mb-3">核心能力</p>
+      <h2 class="heading text-3xl sm:text-4xl" style="color:rgba(255,255,255,.9);">FEATURES</h2>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+      <div class="card-c rounded-2xl p-6 rv">
+        <div class="ibox mb-4" style="background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.18);">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#00f5ff" stroke-width="1.5" aria-hidden="true"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4m0 0h18"/></svg>
+        </div>
+        <h3 class="heading text-sm mb-2" style="color:rgba(255,255,255,.9);letter-spacing:.05em;">频域盲水印</h3>
+        <p class="text-xs leading-relaxed" style="color:rgba(255,255,255,.5);">DWT + DCT 双重变换，修改图像中频系数，肉眼不可见，PSNR 保持 40 dB 以上。</p>
+      </div>
+
+      <div class="card-c rounded-2xl p-6 rv" style="transition-delay:.08s;">
+        <div class="ibox mb-4" style="background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.18);">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#00f5ff" stroke-width="1.5" aria-hidden="true"><path d="M3 10h18M3 14h18M10 3v18M14 3v18"/></svg>
+        </div>
+        <h3 class="heading text-sm mb-2" style="color:rgba(255,255,255,.9);letter-spacing:.05em;">Excel 批量</h3>
+        <p class="text-xs leading-relaxed" style="color:rgba(255,255,255,.5);">导入 .xlsx 文件，按行顺序为每个文件分配独立水印，一次处理数百份文件。</p>
+      </div>
+
+      <div class="card-p rounded-2xl p-6 rv" style="transition-delay:.16s;">
+        <div class="ibox mb-4" style="background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.18);">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#a855f7" stroke-width="1.5" aria-hidden="true"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        </div>
+        <h3 class="heading text-sm mb-2" style="color:rgba(255,255,255,.9);letter-spacing:.05em;">三重编码</h3>
+        <p class="text-xs leading-relaxed" style="color:rgba(255,255,255,.5);">MD5 哈希 / 明文 / AES-256-GCM 加密，按场景选择，高安全模式提取需密钥。</p>
+      </div>
+
+      <div class="card-p rounded-2xl p-6 rv" style="transition-delay:.24s;">
+        <div class="ibox mb-4" style="background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.18);">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#a855f7" stroke-width="1.5" aria-hidden="true"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </div>
+        <h3 class="heading text-sm mb-2" style="color:rgba(255,255,255,.9);letter-spacing:.05em;">多核并行</h3>
+        <p class="text-xs leading-relaxed" style="color:rgba(255,255,255,.5);">Rayon 线程池全速运转，高速模式仅处理 512×512 区域，速度提升 4–10 倍。</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="hr"></div>
+
+
+<!-- ════════════════════════════════════════ HOW IT WORKS -->
+<section id="how-it-works" class="py-28 px-4 grid-bg">
+  <div class="max-w-3xl mx-auto">
+
+    <div class="text-center mb-16 rv">
+      <p class="slabel mb-3">三步上手</p>
+      <h2 class="heading text-3xl sm:text-4xl" style="color:rgba(255,255,255,.9);">HOW IT WORKS</h2>
+    </div>
+
+    <ol class="space-y-0" style="list-style:none;padding:0;">
+
+      <!-- Step 1 -->
+      <li class="flex gap-6 rv">
+        <div class="flex flex-col items-center">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 heading text-sm"
+               style="background:rgba(0,245,255,.1);border:1px solid rgba(0,245,255,.4);color:#00f5ff;">01</div>
+          <div class="sline flex-1 my-2"></div>
+        </div>
+        <div class="pb-10 pt-1 min-w-0">
+          <h3 class="heading text-base mb-2" style="color:rgba(255,255,255,.9);letter-spacing:.05em;">选择压缩包</h3>
+          <p class="text-sm mb-3" style="color:rgba(255,255,255,.52);line-height:1.7;">
+            点击或拖拽文件到软件窗口，支持四种格式：
+          </p>
+          <div class="flex flex-wrap gap-2">
+            <span class="tag tag-c">.zip</span>
+            <span class="tag tag-c">.7z</span>
+            <span class="tag tag-c">.var</span>
+            <span class="tag tag-c">.rar</span>
+          </div>
+        </div>
+      </li>
+
+      <!-- Step 2 -->
+      <li class="flex gap-6 rv">
+        <div class="flex flex-col items-center">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 heading text-sm"
+               style="background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.4);color:#a855f7;">02</div>
+          <div class="sline flex-1 my-2"></div>
+        </div>
+        <div class="pb-10 pt-1 min-w-0">
+          <h3 class="heading text-base mb-2" style="color:rgba(255,255,255,.9);letter-spacing:.05em;">配置水印</h3>
+          <p class="text-sm mb-3" style="color:rgba(255,255,255,.52);line-height:1.7;">
+            选择水印来源（固定文本 / Excel 批量），设置编码方式，指定处理的文件类型与输出目录。
+          </p>
+          <div class="flex flex-wrap gap-2">
+            <span class="tag tag-c">JSON · VAJ · VMI</span>
+            <span class="tag tag-p">PNG 图片</span>
+            <span class="tag tag-g">水印混淆</span>
+          </div>
+        </div>
+      </li>
+
+      <!-- Step 3 -->
+      <li class="flex gap-6 rv">
+        <div class="flex flex-col items-center">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 heading text-sm"
+               style="background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.4);color:#00ff88;">03</div>
+        </div>
+        <div class="pt-1 min-w-0">
+          <h3 class="heading text-base mb-2" style="color:rgba(255,255,255,.9);letter-spacing:.05em;">开始处理</h3>
+          <p class="text-sm" style="color:rgba(255,255,255,.52);line-height:1.7;">
+            点击「开始嵌入」，多核并行完成后，输出文件自动保存在以水印文本命名的子文件夹内，原始文件不变。
+          </p>
+        </div>
+      </li>
+
+    </ol>
+  </div>
+</section>
+
+<div class="hr"></div>
+
+
+<!-- ════════════════════════════════════════ ENCODING MODES -->
+<section class="py-28 px-4">
+  <div class="max-w-6xl mx-auto">
+
+    <div class="text-center mb-16 rv">
+      <p class="slabel mb-3">水印编码</p>
+      <h2 class="heading text-3xl sm:text-4xl" style="color:rgba(255,255,255,.9);">ENCODING MODES</h2>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+      <div class="card-c rounded-2xl p-6 rv">
+        <div class="flex items-center gap-2 mb-5">
+          <span class="tag tag-c">MD5</span>
+          <span class="text-xs" style="color:rgba(255,255,255,.35);">默认推荐</span>
+        </div>
+        <h3 class="heading text-sm mb-2" style="color:rgba(255,255,255,.9);letter-spacing:.05em;">MD5 哈希</h3>
+        <p class="text-xs leading-relaxed mb-5" style="color:rgba(255,255,255,.5);">不可逆哈希，隐藏原始内容。验证时将原始文本重新计算 MD5 后比对即可。</p>
+        <div class="rounded-lg p-2.5 font-mono text-xs" style="background:rgba(0,0,0,.35);color:#00f5ff;word-break:break-all;">a7b3c9d1e4f20856…</div>
+      </div>
+
+      <div class="card-c rounded-2xl p-6 rv" style="transition-delay:.08s;">
+        <div class="flex items-center gap-2 mb-5">
+          <span class="tag tag-g">PLAIN</span>
+        </div>
+        <h3 class="heading text-sm mb-2" style="color:rgba(255,255,255,.9);letter-spacing:.05em;">明文</h3>
+        <p class="text-xs leading-relaxed mb-5" style="color:rgba(255,255,255,.5);">原始文本直接写入，提取结果与输入完全一致，适合无保密要求的场景。</p>
+        <div class="rounded-lg p-2.5 font-mono text-xs" style="background:rgba(0,0,0,.35);color:#00ff88;">张三 · 2024</div>
+      </div>
+
+      <div class="card-p rounded-2xl p-6 rv" style="transition-delay:.16s;">
+        <div class="flex items-center gap-2 mb-5">
+          <span class="tag tag-p">AES-256-GCM</span>
+        </div>
+        <h3 class="heading text-sm mb-2" style="color:rgba(255,255,255,.9);letter-spacing:.05em;">AES-256-GCM</h3>
+        <p class="text-xs leading-relaxed mb-5" style="color:rgba(255,255,255,.5);">军事级对称加密，提取时需输入相同密钥。无密钥无法解读，密钥丢失不可恢复。</p>
+        <div class="rounded-lg p-2.5 font-mono text-xs" style="background:rgba(0,0,0,.35);color:#a855f7;letter-spacing:.15em;">████████████████</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="hr"></div>
+
+
+<!-- ════════════════════════════════════════ FORMATS + OUTPUT -->
+<section class="py-28 px-4 grid-bg">
+  <div class="max-w-6xl mx-auto">
+
+    <div class="text-center mb-16 rv">
+      <p class="slabel mb-3">格式支持 &amp; 输出结构</p>
+      <h2 class="heading text-3xl sm:text-4xl" style="color:rgba(255,255,255,.9);">FORMATS &amp; OUTPUT</h2>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+      <!-- Archives -->
+      <div class="card-c rounded-2xl p-5 rv">
+        <p class="heading text-xs mb-4" style="color:rgba(0,245,255,.6);letter-spacing:.14em;">压缩格式</p>
+        <div class="space-y-2.5">
+          <div class="flex items-center justify-between"><span class="font-mono text-sm" style="color:rgba(255,255,255,.87);">.zip</span><span class="text-xs" style="color:rgba(255,255,255,.35);">ZIP</span></div>
+          <div class="flex items-center justify-between"><span class="font-mono text-sm" style="color:rgba(255,255,255,.87);">.7z</span><span class="text-xs" style="color:rgba(255,255,255,.35);">7-Zip</span></div>
+          <div class="flex items-center justify-between"><span class="font-mono text-sm" style="color:rgba(255,255,255,.87);">.var</span><span class="text-xs" style="color:rgba(255,255,255,.35);">VAR</span></div>
+          <div class="flex items-center justify-between"><span class="font-mono text-sm" style="color:rgba(255,255,255,.87);">.rar</span><span class="text-xs" style="color:rgba(255,255,255,.35);">RAR</span></div>
+        </div>
+      </div>
+
+      <!-- Data -->
+      <div class="card-c rounded-2xl p-5 rv" style="transition-delay:.08s;">
+        <p class="heading text-xs mb-4" style="color:rgba(0,245,255,.6);letter-spacing:.14em;">数据文件</p>
+        <div class="space-y-2.5">
+          <div class="flex items-center justify-between"><span class="font-mono text-sm" style="color:rgba(255,255,255,.87);">.json</span><span class="text-xs" style="color:rgba(255,255,255,.35);">JSON</span></div>
+          <div class="flex items-center justify-between"><span class="font-mono text-sm" style="color:rgba(255,255,255,.87);">.vaj</span><span class="text-xs" style="color:rgba(255,255,255,.35);">VAJ</span></div>
+          <div class="flex items-center justify-between"><span class="font-mono text-sm" style="color:rgba(255,255,255,.87);">.vmi</span><span class="text-xs" style="color:rgba(255,255,255,.35);">VMI</span></div>
+        </div>
+      </div>
+
+      <!-- Images -->
+      <div class="card-p rounded-2xl p-5 rv" style="transition-delay:.16s;">
+        <p class="heading text-xs mb-4" style="color:rgba(168,85,247,.6);letter-spacing:.14em;">图片水印</p>
+        <div class="space-y-2.5">
+          <div class="flex items-center justify-between"><span class="font-mono text-sm" style="color:rgba(255,255,255,.87);">.png</span><span class="tag tag-g" style="font-size:.6rem;">支持</span></div>
+          <div class="flex items-center justify-between"><span class="font-mono text-sm" style="color:rgba(255,255,255,.42);">.jpg</span><span class="tag tag-r" style="font-size:.6rem;">原样保留</span></div>
+          <div class="flex items-center justify-between"><span class="font-mono text-sm" style="color:rgba(255,255,255,.42);">.jpeg</span><span class="tag tag-r" style="font-size:.6rem;">原样保留</span></div>
+        </div>
+        <p class="text-xs mt-4" style="color:rgba(255,255,255,.28);line-height:1.5;">JPEG 有损压缩会破坏频域水印</p>
+      </div>
+
+      <!-- Output -->
+      <div class="card-p rounded-2xl p-5 rv" style="transition-delay:.24s;">
+        <p class="heading text-xs mb-4" style="color:rgba(168,85,247,.6);letter-spacing:.14em;">输出结构</p>
+        <pre class="text-xs leading-6 font-mono" style="color:rgba(255,255,255,.6);">输出目录/
+├── <span style="color:#a855f7;">张三</span>/
+│   └── data.zip
+├── <span style="color:#a855f7;">李四</span>/
+│   └── data.zip
+└── <span style="color:#a855f7;">王五</span>/
+    └── data.zip</pre>
+        <p class="text-xs mt-3" style="color:rgba(255,255,255,.28);">原文件不变 · 同名覆盖保护</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="hr"></div>
+
+
+<!-- ════════════════════════════════════════ FAQ -->
+<section id="faq" class="py-28 px-4">
+  <div class="max-w-3xl mx-auto">
+
+    <div class="text-center mb-16 rv">
+      <p class="slabel mb-3">常见问题</p>
+      <h2 class="heading text-3xl sm:text-4xl" style="color:rgba(255,255,255,.9);">FAQ</h2>
+    </div>
+
+    <div class="space-y-3">
+
+      <div class="card-c rounded-xl p-5 rv">
+        <h3 class="text-sm font-semibold mb-2" style="color:rgba(0,245,255,.9);">图片嵌入水印后视觉上有变化吗？</h3>
+        <p class="text-sm" style="color:rgba(255,255,255,.52);line-height:1.7;">采用 DWT+DCT 频域算法，修改的是图像的中频系数而非像素值，正常强度下肉眼不可见，PSNR 保持在 40 dB 以上。</p>
+      </div>
+
+      <div class="card-c rounded-xl p-5 rv">
+        <h3 class="text-sm font-semibold mb-2" style="color:rgba(0,245,255,.9);">为什么 JPG/JPEG 无法嵌入水印？</h3>
+        <p class="text-sm" style="color:rgba(255,255,255,.52);line-height:1.7;">JPEG 使用有损压缩，保存时会重新量化 DCT 系数，直接破坏已嵌入的水印信息。PNG 为无损格式，可完整保留水印。</p>
+      </div>
+
+      <div class="card-c rounded-xl p-5 rv">
+        <h3 class="text-sm font-semibold mb-2" style="color:rgba(0,245,255,.9);">Excel 批量模式下文件的排列顺序是什么？</h3>
+        <p class="text-sm" style="color:rgba(255,255,255,.52);line-height:1.7;">按文件在压缩包内的相对路径字母升序排列（A→Z），首行为表头自动跳过，从第 2 行开始映射。建议 Excel 中按相同顺序排列水印文本。</p>
+      </div>
+
+      <div class="card-p rounded-xl p-5 rv">
+        <h3 class="text-sm font-semibold mb-2" style="color:rgba(168,85,247,.9);">MD5 模式提取后如何验证原始文本？</h3>
+        <p class="text-sm" style="color:rgba(255,255,255,.52);line-height:1.7;">MD5 不可逆，提取结果为 32 位十六进制哈希。验证时将原始文本重新计算 MD5 后与提取结果对比即可确认一致性。</p>
+      </div>
+
+      <div class="card-p rounded-xl p-5 rv">
+        <h3 class="text-sm font-semibold mb-2" style="color:rgba(168,85,247,.9);">处理大型压缩包时如何加速？</h3>
+        <p class="text-sm" style="color:rgba(255,255,255,.52);line-height:1.7;">开启<strong style="color:rgba(255,255,255,.8);">高速模式</strong>后，超过 512 px 的图片仅处理左上角 512×512 区域，速度可提升 4–10 倍。数据文件（JSON/VAJ/VMI）已使用全核并行处理。</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="hr"></div>
+
+
+<!-- ════════════════════════════════════════ DOWNLOAD CTA -->
+<section id="download" class="py-36 px-4 relative overflow-hidden">
+  <div class="absolute inset-0 pointer-events-none" aria-hidden="true"
+       style="background:radial-gradient(ellipse 55% 65% at 50% 50%,rgba(0,245,255,.045) 0%,transparent 70%);"></div>
+  <div class="absolute inset-0 pointer-events-none" aria-hidden="true"
+       style="background:radial-gradient(ellipse 35% 45% at 75% 25%,rgba(168,85,247,.04) 0%,transparent 65%);"></div>
+
+  <div class="max-w-2xl mx-auto text-center relative z-10">
+    <p class="slabel mb-5 rv">立即开始</p>
+    <h2 class="heading mb-4 rv" style="font-size:clamp(2.5rem,6vw,4rem);color:rgba(255,255,255,.92);">
+      GET<br><span class="neon-cyan">STARTED</span>
+    </h2>
+    <p class="text-sm mb-12 rv" style="color:rgba(255,255,255,.38);">免费使用 · macOS &amp; Windows · 开源项目</p>
+
+    <div class="flex flex-col sm:flex-row gap-4 justify-center items-center rv">
+      <a href="https://github.com/Wxl-c137/BlindMarkerMaster/releases"
+         target="_blank" rel="noopener"
+         class="btn-cta flex items-center gap-3 px-8 py-4 rounded-xl cursor-pointer text-sm"
+         style="min-width:220px;justify-content:center;">
+        <!-- GitHub icon -->
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.866-.013-1.7-2.782.604-3.369-1.341-3.369-1.341-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.744 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+        下载最新版本
+      </a>
+      <a href="https://github.com/Wxl-c137/BlindMarkerMaster"
+         target="_blank" rel="noopener"
+         class="btn-ghost flex items-center gap-3 px-8 py-4 rounded-xl cursor-pointer text-sm"
+         style="min-width:220px;justify-content:center;">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+        查看源代码
+      </a>
+    </div>
+
+    <p class="text-xs mt-8" style="color:rgba(255,255,255,.22);">
+      macOS Apple Silicon · macOS Intel · Windows x64
+    </p>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════ FOOTER -->
+<footer class="px-4 py-7" style="border-top:1px solid rgba(0,245,255,.07);">
+  <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+    <span class="heading text-xs" style="color:rgba(255,255,255,.25);letter-spacing:.1em;">BLINDMARK MASTER · v0.1.0</span>
+    <nav aria-label="页脚导航" class="flex items-center gap-5">
+      <a href="https://github.com/Wxl-c137/BlindMarkerMaster"          target="_blank" rel="noopener" class="nlink">GitHub</a>
+      <a href="https://github.com/Wxl-c137/BlindMarkerMaster/releases"  target="_blank" rel="noopener" class="nlink">Releases</a>
+      <a href="https://github.com/Wxl-c137/BlindMarkerMaster/issues"    target="_blank" rel="noopener" class="nlink">Issues</a>
+    </nav>
+  </div>
+</footer>
+
+
+<script>
+  // Scroll reveal via IntersectionObserver
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); });
+  }, { threshold: 0.1, rootMargin: '0px 0px -36px 0px' });
+  document.querySelectorAll('.rv').forEach(el => io.observe(el));
+</script>
+
+</body>
+</html>
