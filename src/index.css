@@ -107,137 +107,40 @@ body::after {
   z-index: 9999;
 }
 
-/* ── 3D Cube Icon ───────────────────────────────── */
+/* ── Pixel Art Isometric Cube Icon ───────────────── */
+/* 复古像素风格：平面等距立方体，step动画模拟帧动画 */
 .cube-icon-wrap {
   width: 36px;
   height: 36px;
-  perspective: 120px;
   display: inline-block;
 }
 
-.cube-3d {
-  width: 20px;
-  height: 20px;
-  position: relative;
-  transform-style: preserve-3d;
-  margin: 8px;
-  animation: cube-spin 6s linear infinite;
-  will-change: transform;
+.px-cube {
+  display: block;
+  shape-rendering: crispEdges;
+  overflow: visible;
+  animation: px-spin 5.6s steps(8, end) infinite;
+  will-change: filter;
 }
 
-/* 所有面：厚实深色玻璃 + 虹彩棱边（参考图风格）*/
-/* 注意：不在 preserve-3d 子元素上使用 backdrop-filter，会破坏合成层导致闪烁 */
-.cube-face {
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  border: 2px solid transparent;
-  border-radius: 3px;
+.px-top   { fill: #00f5ff; }
+.px-left  { fill: #007a8f; }
+.px-right { fill: #004055; }
+
+@keyframes px-spin {
+  from { filter: hue-rotate(0deg)   drop-shadow(0 0 3px rgba(0,245,255,.95)) drop-shadow(0 0 8px rgba(0,245,255,.4)); }
+  to   { filter: hue-rotate(360deg) drop-shadow(0 0 3px rgba(0,245,255,.95)) drop-shadow(0 0 8px rgba(0,245,255,.4)); }
 }
 
-.face-front {
-  transform: translateZ(10px);
-  background:
-    linear-gradient(138deg, rgba(255,255,255,.09) 0%, rgba(200,230,255,.03) 28%, transparent 50%) padding-box,
-    radial-gradient(ellipse at 12% 14%, rgba(80,230,200,.10) 0%, transparent 32%) padding-box,
-    rgba(7,6,18,.88) padding-box,
-    conic-gradient(from 15deg at 50% 50%, #00f5ff, #7c3aed, #ec4899, #00ff88, #f97316, #22d3ee, #00f5ff) border-box;
-  box-shadow:
-    -2px 0 5px rgba(255,0,120,.55), 2px 0 5px rgba(0,245,255,.55),
-    0 -1px 4px rgba(0,220,255,.42), 0 1px 4px rgba(168,85,247,.42),
-    0 0 10px rgba(0,245,255,.16),
-    inset 0 0 0 1px rgba(180,220,255,.12);
-}
-.face-back {
-  transform: rotateY(180deg) translateZ(10px);
-  background:
-    linear-gradient(318deg, rgba(255,255,255,.05) 0%, transparent 38%) padding-box,
-    rgba(5,5,14,.90) padding-box,
-    conic-gradient(from 195deg at 50% 50%, #00f5ff, #7c3aed, #ec4899, #00ff88, #22d3ee, #00f5ff) border-box;
-  box-shadow: inset 0 0 0 1px rgba(180,220,255,.07);
-}
-.face-left {
-  transform: rotateY(-90deg) translateZ(10px);
-  background:
-    linear-gradient(165deg, rgba(255,255,255,.06) 0%, transparent 45%) padding-box,
-    rgba(6,5,16,.88) padding-box,
-    conic-gradient(from 105deg at 50% 50%, #7c3aed, #ec4899, #00ff88, #22d3ee, #00f5ff, #7c3aed) border-box;
-  box-shadow:
-    0 -2px 5px rgba(168,85,247,.52), 0 2px 5px rgba(0,245,255,.42),
-    inset 0 0 0 1px rgba(180,220,255,.09);
-}
-.face-right {
-  transform: rotateY(90deg) translateZ(10px);
-  background:
-    linear-gradient(200deg, rgba(0,220,255,.06) 0%, transparent 45%) padding-box,
-    rgba(6,5,16,.88) padding-box,
-    conic-gradient(from 285deg at 50% 50%, #22d3ee, #00f5ff, #7c3aed, #ec4899, #00ff88, #22d3ee) border-box;
-  box-shadow:
-    0 -2px 5px rgba(34,211,238,.48), 0 2px 5px rgba(168,85,247,.40),
-    inset 0 0 0 1px rgba(180,220,255,.09);
-}
-.face-top {
-  transform: rotateX(90deg) translateZ(10px);
-  background:
-    radial-gradient(ellipse at 35% 48%, rgba(100,255,220,.11) 0%, transparent 55%) padding-box,
-    rgba(5,5,14,.86) padding-box,
-    conic-gradient(from 40deg at 50% 50%, #00f5ff, #22d3ee, #00ff88, #f97316, #ec4899, #7c3aed, #00f5ff) border-box;
-  box-shadow:
-    -2px 0 5px rgba(0,245,255,.48), 2px 0 5px rgba(0,255,136,.42),
-    inset 0 0 0 1px rgba(180,220,255,.12);
-}
-.face-bottom {
-  transform: rotateX(-90deg) translateZ(10px);
-  background:
-    rgba(4,4,12,.92) padding-box,
-    conic-gradient(from 220deg at 50% 50%, #ec4899, #00ff88, #22d3ee, #00f5ff, #7c3aed, #ec4899) border-box;
-  box-shadow: inset 0 0 0 1px rgba(180,220,255,.06);
-}
+/* ── Light mode pixel cube ───────────────────────── */
+.light .px-top   { fill: #6366f1; }
+.light .px-left  { fill: #4338a0; }
+.light .px-right { fill: #2d2570; }
+.light .px-cube  { animation-name: px-spin-light; }
 
-@keyframes cube-spin {
-  from { transform: rotateY(0deg)   rotateX(-22deg); }
-  to   { transform: rotateY(360deg) rotateX(-22deg); }
-}
-
-/* ── Light mode cube overrides ───────────────────── */
-.light .face-front {
-  background:
-    radial-gradient(ellipse at 28% 22%, rgba(255,255,255,.30) 0%, transparent 52%) padding-box,
-    linear-gradient(145deg, rgba(255,255,255,.12) 0%, transparent 42%) padding-box,
-    rgba(220,228,255,.30) padding-box,
-    conic-gradient(from 20deg at 50% 50%, #6366f1, #8b5cf6, #ec4899, #3b82f6, #06b6d4, #6366f1) border-box;
-  box-shadow: 0 0 5px rgba(99,102,241,.45), 0 0 14px rgba(99,102,241,.22);
-}
-.light .face-back {
-  background:
-    radial-gradient(ellipse at 70% 75%, rgba(255,255,255,.15) 0%, transparent 50%) padding-box,
-    rgba(210,220,255,.28) padding-box,
-    conic-gradient(from 200deg at 50% 50%, #6366f1, #8b5cf6, #ec4899, #3b82f6, #6366f1) border-box;
-}
-.light .face-left {
-  background:
-    radial-gradient(ellipse at 30% 25%, rgba(255,255,255,.22) 0%, transparent 55%) padding-box,
-    rgba(215,210,255,.28) padding-box,
-    conic-gradient(from 110deg at 50% 50%, #8b5cf6, #ec4899, #3b82f6, #6366f1, #8b5cf6) border-box;
-  box-shadow: 0 0 5px rgba(139,92,246,.4), 0 0 12px rgba(139,92,246,.2);
-}
-.light .face-right {
-  background:
-    radial-gradient(ellipse at 65% 30%, rgba(255,255,255,.18) 0%, transparent 50%) padding-box,
-    rgba(215,210,255,.24) padding-box,
-    conic-gradient(from 290deg at 50% 50%, #3b82f6, #6366f1, #8b5cf6, #ec4899, #3b82f6) border-box;
-}
-.light .face-top {
-  background:
-    radial-gradient(ellipse at 40% 40%, rgba(255,255,255,.35) 0%, transparent 60%) padding-box,
-    rgba(218,208,245,.26) padding-box,
-    conic-gradient(from 45deg at 50% 50%, #6366f1, #3b82f6, #f97316, #ec4899, #8b5cf6, #6366f1) border-box;
-  box-shadow: 0 0 5px rgba(225,29,72,.35), 0 0 12px rgba(225,29,72,.18);
-}
-.light .face-bottom {
-  background:
-    rgba(200,210,255,.32) padding-box,
-    conic-gradient(from 225deg at 50% 50%, #8b5cf6, #3b82f6, #6366f1, #ec4899, #8b5cf6) border-box;
+@keyframes px-spin-light {
+  from { filter: hue-rotate(0deg)   drop-shadow(0 0 3px rgba(99,102,241,.9)) drop-shadow(0 0 8px rgba(99,102,241,.4)); }
+  to   { filter: hue-rotate(360deg) drop-shadow(0 0 3px rgba(99,102,241,.9)) drop-shadow(0 0 8px rgba(99,102,241,.4)); }
 }
 
 

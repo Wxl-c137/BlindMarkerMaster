@@ -177,70 +177,30 @@
     /* ── Step line ── */
     .sline { width:2px; background:linear-gradient(180deg,rgba(0,245,255,.45),rgba(168,85,247,.35)); }
 
-    /* ── 3D Cube ── */
+    /* ── Pixel Art Isometric Cube ── */
     .cw { display:inline-block; }
-    .c3 { position:relative; transform-style:preserve-3d; animation:cspin 8s linear infinite; will-change:transform; }
-    /* 注意：不在 preserve-3d 子元素上使用 backdrop-filter，会破坏合成层导致闪烁 */
-    /* 所有面：厚实深色玻璃 + 虹彩棱边（参考图风格）*/
-    .cf { position:absolute; border:6px solid transparent; border-radius:14px; }
+    /* 复古像素风格：平面等距立方体，step动画模拟帧动画 */
+    .px-cube {
+      display: block;
+      shape-rendering: crispEdges;
+      overflow: visible;
+      animation: px-spin 5.6s steps(8, end) infinite;
+      will-change: filter;
+    }
+    .px-cube-lg {
+      animation: px-spin-lg 5.6s steps(8, end) infinite;
+    }
+    .px-top   { fill: #00f5ff; }
+    .px-left  { fill: #007a8f; }
+    .px-right { fill: #004055; }
 
-    .cf-fr {
-      transform:translateZ(var(--tz));
-      background:
-        linear-gradient(138deg, rgba(255,255,255,.09) 0%, rgba(200,230,255,.03) 28%, transparent 50%) padding-box,
-        radial-gradient(ellipse at 12% 14%, rgba(80,230,200,.10) 0%, transparent 32%) padding-box,
-        rgba(7,6,18,.88) padding-box,
-        conic-gradient(from 15deg at 50% 50%, #00f5ff, #7c3aed, #ec4899, #00ff88, #f97316, #22d3ee, #00f5ff) border-box;
-      box-shadow:
-        -6px 0 14px rgba(255,0,120,.55), 6px 0 14px rgba(0,245,255,.55),
-        0 -4px 10px rgba(0,220,255,.42), 0 4px 10px rgba(168,85,247,.42),
-        0 0 28px rgba(0,245,255,.16),
-        inset 0 0 0 1px rgba(180,220,255,.12);
-      display:flex; align-items:center; justify-content:center; }
-    .cf-bk {
-      transform:rotateY(180deg) translateZ(var(--tz));
-      background:
-        linear-gradient(318deg, rgba(255,255,255,.05) 0%, transparent 38%) padding-box,
-        rgba(5,5,14,.90) padding-box,
-        conic-gradient(from 195deg at 50% 50%, #00f5ff, #7c3aed, #ec4899, #00ff88, #22d3ee, #00f5ff) border-box;
-      box-shadow: inset 0 0 0 1px rgba(180,220,255,.07); }
-    .cf-lt {
-      transform:rotateY(-90deg) translateZ(var(--tz));
-      background:
-        linear-gradient(165deg, rgba(255,255,255,.06) 0%, transparent 45%) padding-box,
-        rgba(6,5,16,.88) padding-box,
-        conic-gradient(from 105deg at 50% 50%, #7c3aed, #ec4899, #00ff88, #22d3ee, #00f5ff, #7c3aed) border-box;
-      box-shadow:
-        0 -6px 14px rgba(168,85,247,.52), 0 6px 14px rgba(0,245,255,.42),
-        inset 0 0 0 1px rgba(180,220,255,.09); }
-    .cf-rt {
-      transform:rotateY(90deg) translateZ(var(--tz));
-      background:
-        linear-gradient(200deg, rgba(0,220,255,.06) 0%, transparent 45%) padding-box,
-        rgba(6,5,16,.88) padding-box,
-        conic-gradient(from 285deg at 50% 50%, #22d3ee, #00f5ff, #7c3aed, #ec4899, #00ff88, #22d3ee) border-box;
-      box-shadow:
-        0 -6px 14px rgba(34,211,238,.48), 0 6px 14px rgba(168,85,247,.40),
-        inset 0 0 0 1px rgba(180,220,255,.09); }
-    .cf-tp {
-      transform:rotateX(90deg) translateZ(var(--tz));
-      background:
-        radial-gradient(ellipse at 35% 48%, rgba(100,255,220,.11) 0%, transparent 55%) padding-box,
-        rgba(5,5,14,.86) padding-box,
-        conic-gradient(from 40deg at 50% 50%, #00f5ff, #22d3ee, #00ff88, #f97316, #ec4899, #7c3aed, #00f5ff) border-box;
-      box-shadow:
-        -6px 0 14px rgba(0,245,255,.48), 6px 0 14px rgba(0,255,136,.42),
-        inset 0 0 0 1px rgba(180,220,255,.12); }
-    .cf-bt {
-      transform:rotateX(-90deg) translateZ(var(--tz));
-      background:
-        rgba(4,4,12,.92) padding-box,
-        conic-gradient(from 220deg at 50% 50%, #ec4899, #00ff88, #22d3ee, #00f5ff, #7c3aed, #ec4899) border-box;
-      box-shadow: inset 0 0 0 1px rgba(180,220,255,.06); }
-
-    @keyframes cspin {
-      from { transform: rotateY(0deg)   rotateX(-22deg); }
-      to   { transform: rotateY(360deg) rotateX(-22deg); }
+    @keyframes px-spin {
+      from { filter: hue-rotate(0deg)   drop-shadow(0 0 3px rgba(0,245,255,.95)) drop-shadow(0 0 8px rgba(0,245,255,.4)); }
+      to   { filter: hue-rotate(360deg) drop-shadow(0 0 3px rgba(0,245,255,.95)) drop-shadow(0 0 8px rgba(0,245,255,.4)); }
+    }
+    @keyframes px-spin-lg {
+      from { filter: hue-rotate(0deg)   drop-shadow(0 0 8px rgba(0,245,255,.95)) drop-shadow(0 0 22px rgba(0,245,255,.45)) drop-shadow(0 0 42px rgba(0,245,255,.18)); }
+      to   { filter: hue-rotate(360deg) drop-shadow(0 0 8px rgba(0,245,255,.95)) drop-shadow(0 0 22px rgba(0,245,255,.45)) drop-shadow(0 0 42px rgba(0,245,255,.18)); }
     }
 
     /* ── Nav ── */
@@ -265,7 +225,7 @@
 
     /* ── Reduced motion ── */
     @media (prefers-reduced-motion: reduce) {
-      .glitch, .c3, .neon-cyan { animation:none; }
+      .glitch, .px-cube, .neon-cyan { animation:none; }
       .rv { opacity:1; transform:none; transition:none; }
       .card-c:hover,.card-p:hover,.btn-cta:hover,.btn-ghost:hover { transform:none; }
     }
@@ -286,16 +246,13 @@
 <nav id="nav" aria-label="主导航">
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-3">
-      <!-- mini cube -->
-      <div class="cw" style="width:36px;height:36px;perspective:120px;" aria-hidden="true">
-        <div class="c3" style="width:20px;height:20px;margin:8px;--tz:10px;">
-          <div class="cf cf-fr" style="width:20px;height:20px;"></div>
-          <div class="cf cf-bk" style="width:20px;height:20px;"></div>
-          <div class="cf cf-lt" style="width:20px;height:20px;"></div>
-          <div class="cf cf-rt" style="width:20px;height:20px;"></div>
-          <div class="cf cf-tp" style="width:20px;height:20px;"></div>
-          <div class="cf cf-bt" style="width:20px;height:20px;"></div>
-        </div>
+      <!-- mini pixel cube -->
+      <div class="cw" style="width:36px;height:36px;" aria-hidden="true">
+        <svg class="px-cube" width="24" height="24" viewBox="0 0 24 24" style="display:block;margin:6px;">
+          <polygon class="px-top"   points="12,0 24,6 12,12 0,6"    stroke="rgba(180,255,255,.45)" stroke-width="1"/>
+          <polygon class="px-left"  points="0,6 12,12 12,24 0,18"   stroke="rgba(100,220,220,.2)"  stroke-width="1"/>
+          <polygon class="px-right" points="12,12 24,6 24,18 12,24" stroke="rgba(100,220,220,.15)" stroke-width="1"/>
+        </svg>
       </div>
       <span class="heading text-xs" style="color:rgba(255,255,255,.88);letter-spacing:.07em;">BLINDMARK MASTER</span>
     </div>
@@ -323,19 +280,14 @@
 
   <div class="relative z-10 text-center max-w-4xl mx-auto">
 
-    <!-- Hero cube -->
+    <!-- Hero pixel cube -->
     <div class="flex justify-center mb-9" aria-hidden="true">
-      <div class="cw" style="width:150px;height:150px;perspective:380px;">
-        <div class="c3" style="width:110px;height:110px;margin:20px;--tz:55px;">
-          <div class="cf cf-fr" style="width:110px;height:110px;">
-            <span style="font-family:'Press Start 2P',monospace;font-size:16px;color:#fff;letter-spacing:3px;user-select:none;text-shadow:0 0 4px #fff,0 0 14px rgba(0,245,255,.95),0 0 28px rgba(0,245,255,.6),0 0 50px rgba(168,85,247,.4);">lulu</span>
-          </div>
-          <div class="cf cf-bk" style="width:110px;height:110px;"></div>
-          <div class="cf cf-lt" style="width:110px;height:110px;"></div>
-          <div class="cf cf-rt" style="width:110px;height:110px;"></div>
-          <div class="cf cf-tp" style="width:110px;height:110px;"></div>
-          <div class="cf cf-bt" style="width:110px;height:110px;"></div>
-        </div>
+      <div class="cw" style="width:150px;height:150px;">
+        <svg class="px-cube px-cube-lg" width="120" height="120" viewBox="0 0 120 120" style="display:block;margin:15px;">
+          <polygon class="px-top"   points="60,0 120,30 60,60 0,30"    stroke="rgba(180,255,255,.38)" stroke-width="1.5"/>
+          <polygon class="px-left"  points="0,30 60,60 60,120 0,90"    stroke="rgba(100,220,220,.18)" stroke-width="1.5"/>
+          <polygon class="px-right" points="60,60 120,30 120,90 60,120" stroke="rgba(100,220,220,.12)" stroke-width="1.5"/>
+        </svg>
       </div>
     </div>
 
