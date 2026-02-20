@@ -183,137 +183,134 @@
     /* 折射：blur+saturate 模糊并增饱和背景 */
     .cf { position:absolute; border:2px solid transparent; border-radius:8px; backdrop-filter:blur(3px) saturate(1.25); }
 
-    /* 正面：三层彩虹干涉 + 焦散 + Fresnel + 高光 + 扫描线 */
+    /* 正面：高透明 + 三层彩虹 + 强色散棱边 */
     .cf-fr {
       transform:translateZ(var(--tz));
       background:
-        /* 焦散亮斑 */
-        radial-gradient(ellipse at 74% 78%, rgba(0,245,255,.13) 0%, transparent 42%) padding-box,
-        /* ① 内部圆锥彩虹盘：薄膜虹彩旋转色环 */
+        radial-gradient(ellipse at 74% 78%, rgba(0,245,255,.14) 0%, transparent 42%) padding-box,
         conic-gradient(from 45deg at 35% 38%,
-          rgba(255,0,100,.13) 0deg, rgba(255,130,0,.12) 52deg,
-          rgba(255,230,0,.12) 104deg, rgba(0,255,110,.12) 156deg,
-          rgba(0,210,255,.13) 208deg, rgba(140,0,255,.12) 260deg,
-          rgba(255,0,100,.13) 360deg) padding-box,
-        /* ② 主斜向光谱带 */
+          rgba(255,0,100,.18) 0deg, rgba(255,130,0,.17) 52deg,
+          rgba(255,230,0,.17) 104deg, rgba(0,255,110,.17) 156deg,
+          rgba(0,210,255,.18) 208deg, rgba(140,0,255,.17) 260deg,
+          rgba(255,0,100,.18) 360deg) padding-box,
         linear-gradient(128deg,
-          rgba(255,0,110,.13) 0%, rgba(255,85,0,.12) 17%,
-          rgba(255,215,0,.12) 33%, rgba(0,255,115,.12) 50%,
-          rgba(0,210,255,.13) 66%, rgba(110,0,255,.12) 82%,
-          rgba(255,0,110,.12) 100%) padding-box,
-        /* ③ 交叉干涉带（约 90° 偏角产生叠色） */
+          rgba(255,0,110,.19) 0%, rgba(255,85,0,.17) 17%,
+          rgba(255,215,0,.17) 33%, rgba(0,255,115,.17) 50%,
+          rgba(0,210,255,.19) 66%, rgba(110,0,255,.17) 82%,
+          rgba(255,0,110,.17) 100%) padding-box,
         linear-gradient(218deg,
-          rgba(0,210,255,.10) 0%, rgba(150,0,255,.10) 30%,
-          rgba(255,0,100,.10) 58%, rgba(0,255,100,.10) 84%,
-          rgba(0,210,255,.09) 100%) padding-box,
-        /* Fresnel 边缘增亮 */
-        radial-gradient(ellipse at 50% 50%, transparent 34%, rgba(120,80,220,.08) 100%) padding-box,
-        /* 主高光 */
+          rgba(0,210,255,.14) 0%, rgba(150,0,255,.14) 30%,
+          rgba(255,0,100,.14) 58%, rgba(0,255,100,.14) 84%,
+          rgba(0,210,255,.13) 100%) padding-box,
+        radial-gradient(ellipse at 50% 50%, transparent 34%, rgba(120,80,220,.09) 100%) padding-box,
         radial-gradient(ellipse at 28% 22%, rgba(255,255,255,.22) 0%, transparent 50%) padding-box,
         linear-gradient(145deg, rgba(255,255,255,.08) 0%, transparent 40%) padding-box,
-        /* 扫描线 */
         repeating-linear-gradient(0deg, rgba(0,0,0,.10) 0 1px, transparent 1px 3px) padding-box,
-        rgba(8,8,28,.16) padding-box,
+        rgba(8,8,28,.07) padding-box,
         conic-gradient(from 20deg at 50% 50%, #00f5ff, #7c3aed, #ec4899, #22d3ee, #f97316, #00f5ff) border-box;
       box-shadow:
-        -2px 0 6px rgba(236,72,153,.38), 2px 0 6px rgba(0,245,255,.38),
-        0 0 8px rgba(255,255,255,.16), 0 0 20px rgba(0,245,255,.28), 0 0 44px rgba(168,85,247,.18),
-        inset 0 0 14px rgba(0,245,255,.09);
+        -5px 0 10px rgba(255,0,100,.65), 5px 0 10px rgba(0,245,255,.65),
+        0 -4px 8px rgba(140,0,255,.48), 0 4px 8px rgba(0,255,120,.42),
+        0 0 10px rgba(255,255,255,.14), 0 0 22px rgba(0,245,255,.24), 0 0 50px rgba(168,85,247,.16),
+        inset 0 0 16px rgba(0,245,255,.10);
       display:flex; align-items:center; justify-content:center; }
     .cf-bk {
       transform:rotateY(180deg) translateZ(var(--tz));
       background:
-        radial-gradient(ellipse at 30% 28%, rgba(0,245,255,.10) 0%, transparent 45%) padding-box,
+        radial-gradient(ellipse at 30% 28%, rgba(0,245,255,.12) 0%, transparent 45%) padding-box,
         conic-gradient(from 200deg at 65% 60%,
-          rgba(0,200,255,.12) 0deg, rgba(140,0,255,.11) 90deg,
-          rgba(255,0,100,.12) 180deg, rgba(0,255,120,.11) 270deg,
-          rgba(0,200,255,.12) 360deg) padding-box,
+          rgba(0,200,255,.17) 0deg, rgba(140,0,255,.16) 90deg,
+          rgba(255,0,100,.17) 180deg, rgba(0,255,120,.16) 270deg,
+          rgba(0,200,255,.17) 360deg) padding-box,
         linear-gradient(148deg,
-          rgba(0,200,255,.11) 0%, rgba(140,0,255,.11) 35%,
-          rgba(255,0,100,.11) 65%, rgba(0,255,120,.11) 100%) padding-box,
+          rgba(0,200,255,.16) 0%, rgba(140,0,255,.16) 35%,
+          rgba(255,0,100,.16) 65%, rgba(0,255,120,.16) 100%) padding-box,
         linear-gradient(238deg,
-          rgba(255,200,0,.09) 0%, rgba(0,255,120,.10) 40%,
-          rgba(0,200,255,.09) 75%, rgba(255,0,100,.09) 100%) padding-box,
+          rgba(255,200,0,.13) 0%, rgba(0,255,120,.14) 40%,
+          rgba(0,200,255,.13) 75%, rgba(255,0,100,.13) 100%) padding-box,
         radial-gradient(ellipse at 70% 75%, rgba(255,255,255,.08) 0%, transparent 50%) padding-box,
-        rgba(4,4,18,.16) padding-box,
+        rgba(4,4,18,.07) padding-box,
         conic-gradient(from 200deg at 50% 50%, #00f5ff, #7c3aed, #ec4899, #22d3ee, #00f5ff) border-box;
-      box-shadow: inset 0 0 12px rgba(0,245,255,.06); }
+      box-shadow: inset 0 0 14px rgba(0,245,255,.07); }
     .cf-lt {
       transform:rotateY(-90deg) translateZ(var(--tz));
       background:
-        radial-gradient(ellipse at 68% 72%, rgba(168,85,247,.12) 0%, transparent 42%) padding-box,
+        radial-gradient(ellipse at 68% 72%, rgba(168,85,247,.14) 0%, transparent 42%) padding-box,
         conic-gradient(from 290deg at 40% 35%,
-          rgba(168,85,247,.12) 0deg, rgba(255,0,100,.11) 80deg,
-          rgba(255,200,0,.11) 160deg, rgba(0,200,255,.12) 240deg,
-          rgba(168,85,247,.12) 360deg) padding-box,
+          rgba(168,85,247,.17) 0deg, rgba(255,0,100,.16) 80deg,
+          rgba(255,200,0,.16) 160deg, rgba(0,200,255,.17) 240deg,
+          rgba(168,85,247,.17) 360deg) padding-box,
         linear-gradient(108deg,
-          rgba(255,0,100,.12) 0%, rgba(255,175,0,.11) 25%,
-          rgba(0,255,120,.12) 50%, rgba(0,200,255,.12) 75%,
-          rgba(150,0,255,.12) 100%) padding-box,
+          rgba(255,0,100,.18) 0%, rgba(255,175,0,.16) 25%,
+          rgba(0,255,120,.18) 50%, rgba(0,200,255,.18) 75%,
+          rgba(150,0,255,.18) 100%) padding-box,
         linear-gradient(198deg,
-          rgba(0,200,255,.09) 0%, rgba(255,0,100,.10) 45%,
-          rgba(255,200,0,.09) 80%, rgba(150,0,255,.09) 100%) padding-box,
+          rgba(0,200,255,.13) 0%, rgba(255,0,100,.14) 45%,
+          rgba(255,200,0,.13) 80%, rgba(150,0,255,.13) 100%) padding-box,
         radial-gradient(ellipse at 30% 25%, rgba(255,255,255,.14) 0%, transparent 55%) padding-box,
-        rgba(6,4,22,.18) padding-box,
+        rgba(6,4,22,.07) padding-box,
         conic-gradient(from 110deg at 50% 50%, #7c3aed, #ec4899, #22d3ee, #00f5ff, #7c3aed) border-box;
       box-shadow:
-        0 -2px 6px rgba(168,85,247,.40), 0 2px 6px rgba(0,245,255,.30),
-        0 0 6px rgba(255,255,255,.12), 0 0 16px rgba(168,85,247,.30),
-        inset 0 0 10px rgba(168,85,247,.09); }
+        0 -5px 10px rgba(168,85,247,.65), 0 5px 10px rgba(0,245,255,.55),
+        -3px 0 8px rgba(255,0,100,.42), 3px 0 8px rgba(0,255,120,.36),
+        0 0 8px rgba(255,255,255,.10), 0 0 18px rgba(168,85,247,.32),
+        inset 0 0 12px rgba(168,85,247,.11); }
     .cf-rt {
       transform:rotateY(90deg) translateZ(var(--tz));
       background:
-        radial-gradient(ellipse at 30% 30%, rgba(34,211,238,.10) 0%, transparent 42%) padding-box,
+        radial-gradient(ellipse at 30% 30%, rgba(34,211,238,.12) 0%, transparent 42%) padding-box,
         conic-gradient(from 70deg at 62% 60%,
-          rgba(0,210,255,.12) 0deg, rgba(0,255,120,.11) 90deg,
-          rgba(255,200,0,.11) 180deg, rgba(255,0,100,.12) 270deg,
-          rgba(0,210,255,.12) 360deg) padding-box,
+          rgba(0,210,255,.17) 0deg, rgba(0,255,120,.16) 90deg,
+          rgba(255,200,0,.16) 180deg, rgba(255,0,100,.17) 270deg,
+          rgba(0,210,255,.17) 360deg) padding-box,
         linear-gradient(158deg,
-          rgba(0,200,255,.12) 0%, rgba(0,255,130,.11) 28%,
-          rgba(255,175,0,.11) 55%, rgba(255,0,100,.12) 80%,
-          rgba(150,0,255,.11) 100%) padding-box,
+          rgba(0,200,255,.18) 0%, rgba(0,255,130,.16) 28%,
+          rgba(255,175,0,.16) 55%, rgba(255,0,100,.18) 80%,
+          rgba(150,0,255,.16) 100%) padding-box,
         linear-gradient(248deg,
-          rgba(150,0,255,.09) 0%, rgba(255,0,100,.10) 38%,
-          rgba(255,200,0,.09) 70%, rgba(0,200,255,.09) 100%) padding-box,
+          rgba(150,0,255,.13) 0%, rgba(255,0,100,.14) 38%,
+          rgba(255,200,0,.13) 70%, rgba(0,200,255,.13) 100%) padding-box,
         radial-gradient(ellipse at 65% 30%, rgba(255,255,255,.12) 0%, transparent 50%) padding-box,
-        rgba(6,4,22,.16) padding-box,
+        rgba(6,4,22,.07) padding-box,
         conic-gradient(from 290deg at 50% 50%, #22d3ee, #00f5ff, #7c3aed, #ec4899, #22d3ee) border-box;
       box-shadow:
-        0 -2px 5px rgba(34,211,238,.32), 0 2px 5px rgba(168,85,247,.26),
-        inset 0 0 10px rgba(34,211,238,.08); }
+        0 -5px 10px rgba(34,211,238,.60), 0 5px 10px rgba(168,85,247,.50),
+        -3px 0 8px rgba(255,200,0,.38), 3px 0 8px rgba(255,0,100,.35),
+        inset 0 0 12px rgba(34,211,238,.10); }
     .cf-tp {
       transform:rotateX(90deg) translateZ(var(--tz));
       background:
         conic-gradient(from 10deg at 46% 48%,
-          rgba(255,235,0,.13) 0deg, rgba(0,255,120,.12) 72deg,
-          rgba(0,200,255,.13) 144deg, rgba(140,0,255,.12) 216deg,
-          rgba(255,0,100,.13) 288deg, rgba(255,235,0,.13) 360deg) padding-box,
+          rgba(255,235,0,.18) 0deg, rgba(0,255,120,.17) 72deg,
+          rgba(0,200,255,.18) 144deg, rgba(140,0,255,.17) 216deg,
+          rgba(255,0,100,.18) 288deg, rgba(255,235,0,.18) 360deg) padding-box,
         linear-gradient(48deg,
-          rgba(255,200,0,.12) 0%, rgba(0,255,130,.12) 25%,
-          rgba(0,200,255,.12) 50%, rgba(150,0,255,.12) 75%,
-          rgba(255,0,100,.12) 100%) padding-box,
+          rgba(255,200,0,.18) 0%, rgba(0,255,130,.17) 25%,
+          rgba(0,200,255,.18) 50%, rgba(150,0,255,.17) 75%,
+          rgba(255,0,100,.18) 100%) padding-box,
         linear-gradient(138deg,
-          rgba(0,200,255,.09) 0%, rgba(255,200,0,.10) 40%,
-          rgba(255,0,100,.09) 75%, rgba(0,255,120,.09) 100%) padding-box,
+          rgba(0,200,255,.13) 0%, rgba(255,200,0,.14) 40%,
+          rgba(255,0,100,.13) 75%, rgba(0,255,120,.13) 100%) padding-box,
         radial-gradient(ellipse at 40% 40%, rgba(255,255,255,.24) 0%, transparent 60%) padding-box,
-        rgba(8,6,24,.14) padding-box,
+        rgba(8,6,24,.06) padding-box,
         conic-gradient(from 45deg at 50% 50%, #00f5ff, #22d3ee, #f97316, #ec4899, #7c3aed, #00f5ff) border-box;
       box-shadow:
-        -2px 0 6px rgba(244,63,94,.32), 2px 0 6px rgba(0,245,255,.28),
-        0 0 6px rgba(255,255,255,.14), 0 0 16px rgba(244,63,94,.26),
-        inset 0 0 10px rgba(244,63,94,.09); }
+        -5px 0 10px rgba(244,63,94,.62), 5px 0 10px rgba(0,245,255,.52),
+        0 -3px 8px rgba(255,200,0,.42), 0 3px 8px rgba(140,0,255,.36),
+        0 0 8px rgba(255,255,255,.12), 0 0 18px rgba(244,63,94,.28),
+        inset 0 0 12px rgba(244,63,94,.11); }
     .cf-bt {
       transform:rotateX(-90deg) translateZ(var(--tz));
       background:
         conic-gradient(from 180deg at 50% 52%,
-          rgba(100,60,200,.11) 0deg, rgba(0,200,255,.10) 120deg,
-          rgba(255,0,100,.11) 240deg, rgba(100,60,200,.11) 360deg) padding-box,
+          rgba(100,60,200,.15) 0deg, rgba(0,200,255,.14) 120deg,
+          rgba(255,0,100,.15) 240deg, rgba(100,60,200,.15) 360deg) padding-box,
         linear-gradient(168deg,
-          rgba(150,0,255,.10) 0%, rgba(0,200,255,.10) 35%,
-          rgba(0,255,120,.09) 68%, rgba(255,200,0,.09) 100%) padding-box,
-        rgba(2,2,12,.20) padding-box,
+          rgba(150,0,255,.14) 0%, rgba(0,200,255,.14) 35%,
+          rgba(0,255,120,.13) 68%, rgba(255,200,0,.13) 100%) padding-box,
+        rgba(2,2,12,.09) padding-box,
         conic-gradient(from 225deg at 50% 50%, #7c3aed, #22d3ee, #00f5ff, #ec4899, #7c3aed) border-box;
-      box-shadow: inset 0 0 12px rgba(100,60,200,.07); }
+      box-shadow: inset 0 0 14px rgba(100,60,200,.08); }
 
     @keyframes cspin {
       from { transform: rotateY(0deg)   rotateX(-22deg); }
