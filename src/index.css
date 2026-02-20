@@ -108,52 +108,27 @@ body::after {
 }
 
 /* ── Pixel Art Isometric Cube Icon ───────────────── */
-/* 复古像素风格：平面等距立方体，Y轴旋转 + 边缘流光 */
+/* 复古8bit像素艺术：16×16格等距立方体静态图标 */
 .cube-icon-wrap {
   width: 36px;
   height: 36px;
   display: inline-block;
-  perspective: 150px;
 }
 
 .px-cube {
   display: block;
   shape-rendering: crispEdges;
   overflow: visible;
-  transform-box: fill-box;
-  transform-origin: center center;
   /* 青+紫双色光晕，与站点主色一致 */
   filter: drop-shadow(0 0 3px rgba(0,245,255,.88))
           drop-shadow(0 0 10px rgba(0,245,255,.32))
           drop-shadow(0 0 18px rgba(168,85,247,.22));
-  animation: px-spin-y 4s steps(8, end) infinite;
 }
 
 /* 顶面：品牌青  左面：品牌紫  右面：深紫 */
 .px-top   { fill: #00f5ff; }
 .px-left  { fill: #7c3aed; }
 .px-right { fill: #3b1d8a; }
-/* 顶面像素高光块 */
-.px-shine { fill: rgba(255,255,255,.22); }
-
-/* 边缘流光 — 沿六边形轮廓描边流动 */
-.px-edge-glow {
-  fill: none;
-  stroke: rgba(0,245,255,.9);
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  stroke-dasharray: 8 70;
-  animation: px-edge-flow 2.4s linear infinite;
-}
-
-@keyframes px-spin-y {
-  from { transform: rotateY(0deg); }
-  to   { transform: rotateY(360deg); }
-}
-@keyframes px-edge-flow {
-  from { stroke-dashoffset: 0; }
-  to   { stroke-dashoffset: -78; }
-}
 
 /* ── Light mode pixel cube ───────────────────────── */
 .light .px-top   { fill: #0ea5e9; }
@@ -163,9 +138,6 @@ body::after {
   filter: drop-shadow(0 0 3px rgba(14,165,233,.85))
           drop-shadow(0 0 10px rgba(14,165,233,.3))
           drop-shadow(0 0 18px rgba(124,58,237,.22));
-}
-.light .px-edge-glow {
-  stroke: rgba(99,102,241,.9);
 }
 
 

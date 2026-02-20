@@ -479,12 +479,10 @@ function App() {
           <div className="flex items-start gap-3">
             {/* Pixel art isometric cube icon */}
             <div className="cube-icon-wrap shrink-0 mt-1">
-              <svg className="px-cube" width="24" height="24" viewBox="0 0 24 24" style={{display:'block',margin:'6px'}}>
-                <polygon className="px-top"       points="12,0 24,6 12,12 0,6"    stroke="rgba(180,255,255,.6)"  strokeWidth="1"/>
-                <polygon className="px-left"      points="0,6 12,12 12,24 0,18"   stroke="rgba(200,160,255,.35)" strokeWidth="1"/>
-                <polygon className="px-right"     points="12,12 24,6 24,18 12,24" stroke="rgba(140,90,220,.28)"  strokeWidth="1"/>
-                <polygon className="px-shine"     points="12,1 18,4 15,7 9,4"/>
-                <polygon className="px-edge-glow" points="12,0 24,6 24,18 12,24 0,18 0,6"/>
+              <svg className="px-cube" width="24" height="24" viewBox="0 0 16 16" style={{display:'block',margin:'6px'}}>
+                <polygon className="px-top"   points="8,0 10,0 10,1 12,1 12,2 14,2 14,3 16,3 16,4 14,4 14,5 12,5 12,6 10,6 10,7 8,7 8,8 6,8 6,7 4,7 4,6 2,6 2,5 0,5 0,4 2,4 2,3 4,3 4,2 6,2 6,1 8,1"/>
+                <polygon className="px-left"  points="0,4 0,5 2,5 2,6 4,6 4,7 6,7 6,8 8,8 8,16 8,15 6,15 6,14 4,14 4,13 2,13 2,12 0,12"/>
+                <polygon className="px-right" points="8,8 8,7 10,7 10,6 12,6 12,5 14,5 14,4 16,4 16,12 14,12 14,13 12,13 12,14 10,14 10,15 8,15 8,16"/>
               </svg>
             </div>
             <div>

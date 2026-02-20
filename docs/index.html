@@ -178,63 +178,27 @@
     .sline { width:2px; background:linear-gradient(180deg,rgba(0,245,255,.45),rgba(168,85,247,.35)); }
 
     /* ── Pixel Art Isometric Cube ── */
-    /* 复古像素风格：平面等距立方体，Y轴旋转 + 边缘流光 */
-    .cw { display:inline-block; perspective:150px; }
+    /* 复古8bit像素艺术：16×16格等距立方体静态图标 */
+    .cw { display:inline-block; }
     .px-cube {
       display: block;
       shape-rendering: crispEdges;
       overflow: visible;
-      transform-box: fill-box;
-      transform-origin: center center;
       /* 青+紫双色光晕，与站点主色一致 */
       filter: drop-shadow(0 0 3px rgba(0,245,255,.88))
               drop-shadow(0 0 10px rgba(0,245,255,.32))
               drop-shadow(0 0 18px rgba(168,85,247,.22));
-      animation: px-spin-y 4s steps(8, end) infinite;
     }
     .px-cube-lg {
       filter: drop-shadow(0 0 8px rgba(0,245,255,.9))
               drop-shadow(0 0 22px rgba(0,245,255,.42))
               drop-shadow(0 0 40px rgba(168,85,247,.28))
               drop-shadow(0 0 62px rgba(168,85,247,.14));
-      animation-duration: 4s;
     }
     /* 顶面：品牌青  左面：品牌紫  右面：深紫 */
     .px-top   { fill: #00f5ff; }
     .px-left  { fill: #7c3aed; }
     .px-right { fill: #3b1d8a; }
-    /* 顶面像素高光块 */
-    .px-shine { fill: rgba(255,255,255,.22); }
-
-    /* 边缘流光 — 沿六边形轮廓描边流动 */
-    .px-edge-glow {
-      fill: none;
-      stroke: rgba(0,245,255,.9);
-      stroke-width: 1.5;
-      stroke-linecap: round;
-      stroke-dasharray: 8 70;
-      animation: px-edge-flow 2.4s linear infinite;
-    }
-    /* Hero 大版本边缘流光 override */
-    .px-cube-lg .px-edge-glow {
-      stroke-width: 3;
-      stroke-dasharray: 40 348;
-      animation-name: px-edge-flow-lg;
-      animation-duration: 3s;
-    }
-
-    @keyframes px-spin-y {
-      from { transform: rotateY(0deg); }
-      to   { transform: rotateY(360deg); }
-    }
-    @keyframes px-edge-flow {
-      from { stroke-dashoffset: 0; }
-      to   { stroke-dashoffset: -78; }
-    }
-    @keyframes px-edge-flow-lg {
-      from { stroke-dashoffset: 0; }
-      to   { stroke-dashoffset: -388; }
-    }
 
     /* ── Nav ── */
     #nav {
@@ -258,7 +222,7 @@
 
     /* ── Reduced motion ── */
     @media (prefers-reduced-motion: reduce) {
-      .glitch, .px-cube, .px-edge-glow, .neon-cyan { animation:none; }
+      .glitch, .neon-cyan { animation:none; }
       .rv { opacity:1; transform:none; transition:none; }
       .card-c:hover,.card-p:hover,.btn-cta:hover,.btn-ghost:hover { transform:none; }
     }
@@ -281,12 +245,10 @@
     <div class="flex items-center gap-3">
       <!-- mini pixel cube -->
       <div class="cw" style="width:36px;height:36px;" aria-hidden="true">
-        <svg class="px-cube" width="24" height="24" viewBox="0 0 24 24" style="display:block;margin:6px;">
-          <polygon class="px-top"       points="12,0 24,6 12,12 0,6"    stroke="rgba(180,255,255,.6)"  stroke-width="1"/>
-          <polygon class="px-left"      points="0,6 12,12 12,24 0,18"   stroke="rgba(200,160,255,.35)" stroke-width="1"/>
-          <polygon class="px-right"     points="12,12 24,6 24,18 12,24" stroke="rgba(140,90,220,.28)"  stroke-width="1"/>
-          <polygon class="px-shine"     points="12,1 18,4 15,7 9,4"/>
-          <polygon class="px-edge-glow" points="12,0 24,6 24,18 12,24 0,18 0,6"/>
+        <svg class="px-cube" width="24" height="24" viewBox="0 0 16 16" style="display:block;margin:6px;">
+          <polygon class="px-top"   points="8,0 10,0 10,1 12,1 12,2 14,2 14,3 16,3 16,4 14,4 14,5 12,5 12,6 10,6 10,7 8,7 8,8 6,8 6,7 4,7 4,6 2,6 2,5 0,5 0,4 2,4 2,3 4,3 4,2 6,2 6,1 8,1"/>
+          <polygon class="px-left"  points="0,4 0,5 2,5 2,6 4,6 4,7 6,7 6,8 8,8 8,16 8,15 6,15 6,14 4,14 4,13 2,13 2,12 0,12"/>
+          <polygon class="px-right" points="8,8 8,7 10,7 10,6 12,6 12,5 14,5 14,4 16,4 16,12 14,12 14,13 12,13 12,14 10,14 10,15 8,15 8,16"/>
         </svg>
       </div>
       <span class="heading text-xs" style="color:rgba(255,255,255,.88);letter-spacing:.07em;">BLINDMARK MASTER</span>
@@ -317,13 +279,11 @@
 
     <!-- Hero pixel cube -->
     <div class="flex justify-center mb-9" aria-hidden="true">
-      <div class="cw" style="width:150px;height:150px;perspective:500px;">
-        <svg class="px-cube px-cube-lg" width="120" height="120" viewBox="0 0 120 120" style="display:block;margin:15px;">
-          <polygon class="px-top"       points="60,0 120,30 60,60 0,30"     stroke="rgba(180,255,255,.55)" stroke-width="1.5"/>
-          <polygon class="px-left"      points="0,30 60,60 60,120 0,90"     stroke="rgba(200,160,255,.3)"  stroke-width="1.5"/>
-          <polygon class="px-right"     points="60,60 120,30 120,90 60,120" stroke="rgba(140,90,220,.22)"  stroke-width="1.5"/>
-          <polygon class="px-shine"     points="60,2 90,17 74,29 44,14"/>
-          <polygon class="px-edge-glow" points="60,0 120,30 120,90 60,120 0,90 0,30"/>
+      <div class="cw" style="width:150px;height:150px;">
+        <svg class="px-cube px-cube-lg" width="120" height="120" viewBox="0 0 16 16" style="display:block;margin:15px;">
+          <polygon class="px-top"   points="8,0 10,0 10,1 12,1 12,2 14,2 14,3 16,3 16,4 14,4 14,5 12,5 12,6 10,6 10,7 8,7 8,8 6,8 6,7 4,7 4,6 2,6 2,5 0,5 0,4 2,4 2,3 4,3 4,2 6,2 6,1 8,1"/>
+          <polygon class="px-left"  points="0,4 0,5 2,5 2,6 4,6 4,7 6,7 6,8 8,8 8,16 8,15 6,15 6,14 4,14 4,13 2,13 2,12 0,12"/>
+          <polygon class="px-right" points="8,8 8,7 10,7 10,6 12,6 12,5 14,5 14,4 16,4 16,12 14,12 14,13 12,13 12,14 10,14 10,15 8,15 8,16"/>
         </svg>
       </div>
     </div>
