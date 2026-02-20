@@ -125,14 +125,14 @@ body::after {
   will-change: transform;
 }
 
-/* 所有面：高透明玻璃 + 折射 + 彩虹虹彩 + 强色散棱边 */
+/* 所有面：高透明玻璃 + 彩虹虹彩 + 强色散棱边 */
+/* 注意：不在 preserve-3d 子元素上使用 backdrop-filter，会破坏合成层导致闪烁 */
 .cube-face {
   position: absolute;
   width: 20px;
   height: 20px;
   border: 2px solid transparent;
   border-radius: 2px;
-  backdrop-filter: blur(1px) saturate(1.15);
 }
 
 .face-front {

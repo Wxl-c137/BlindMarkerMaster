@@ -180,8 +180,8 @@
     /* ── 3D Cube ── */
     .cw { display:inline-block; }
     .c3 { position:relative; transform-style:preserve-3d; animation:cspin 8s linear infinite; will-change:transform; }
-    /* 折射：blur+saturate 模糊并增饱和背景 */
-    .cf { position:absolute; border:2px solid transparent; border-radius:8px; backdrop-filter:blur(3px) saturate(1.25); }
+    /* 注意：不在 preserve-3d 子元素上使用 backdrop-filter，会破坏合成层导致闪烁 */
+    .cf { position:absolute; border:2px solid transparent; border-radius:8px; }
 
     /* 正面：高透明 + 三层彩虹 + 强色散棱边 */
     .cf-fr {
