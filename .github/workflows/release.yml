@@ -1,0 +1,78 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    permissions:
+      contents: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: --target aarch64-apple-darwin
+            target: aarch64-apple-darwin
+            label: macOS-Apple-Silicon
+          - platform: macos-latest
+            args: --target x86_64-apple-darwin
+            target: x86_64-apple-darwin
+            label: macOS-Intel
+          - platform: windows-latest
+            args: --target x86_64-pc-windows-msvc
+            target: x86_64-pc-windows-msvc
+            label: Windows-x64
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+          key: ${{ matrix.target }}
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'BlindMark Master ${{ github.ref_name }}'
+          releaseBody: |
+            ## BlindMark Master ${{ github.ref_name }}
+
+            批量盲水印工具，支持 .zip / .7z / .var / .rar 压缩包。
+
+            ### 下载说明
+            | 文件 | 平台 |
+            |------|------|
+            | `*_aarch64.dmg` | macOS Apple Silicon（M1/M2/M3） |
+            | `*_x64.dmg` | macOS Intel |
+            | `*_x64-setup.exe` | Windows 64位（推荐） |
+            | `*_x64_en-US.msi` | Windows 64位（MSI） |
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}
