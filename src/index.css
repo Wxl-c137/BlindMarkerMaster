@@ -108,7 +108,7 @@ body::after {
 }
 
 /* ── Pixel Art Isometric Cube Icon ───────────────── */
-/* 复古像素风格：平面等距立方体，step动画模拟帧动画 */
+/* 复古像素风格：平面等距立方体，分解重组帧动画（step-end 跳帧） */
 .cube-icon-wrap {
   width: 36px;
   height: 36px;
@@ -119,28 +119,46 @@ body::after {
   display: block;
   shape-rendering: crispEdges;
   overflow: visible;
-  animation: px-spin 5.6s steps(8, end) infinite;
-  will-change: filter;
+  filter: drop-shadow(0 0 3px rgba(0,245,255,.85)) drop-shadow(0 0 9px rgba(0,245,255,.32));
 }
 
 .px-top   { fill: #00f5ff; }
 .px-left  { fill: #007a8f; }
 .px-right { fill: #004055; }
 
-@keyframes px-spin {
-  from { filter: hue-rotate(0deg)   drop-shadow(0 0 3px rgba(0,245,255,.95)) drop-shadow(0 0 8px rgba(0,245,255,.4)); }
-  to   { filter: hue-rotate(360deg) drop-shadow(0 0 3px rgba(0,245,255,.95)) drop-shadow(0 0 8px rgba(0,245,255,.4)); }
+/* 分解重组逐帧动画 — 6帧 step-end 跳帧 */
+.px-cube .px-top   { animation: px-asm-top   3.6s step-end infinite; }
+.px-cube .px-left  { animation: px-asm-left  3.6s step-end infinite; }
+.px-cube .px-right { animation: px-asm-right 3.6s step-end infinite; }
+
+@keyframes px-asm-top {
+  0%, 16.67%  { transform: translate(0, 0); }
+  33.33%      { transform: translate(0, -3px); }
+  50%         { transform: translate(0, -10px); }
+  66.67%      { transform: translate(0, -4px); }
+  83.33%      { transform: translate(0, 0); }
+}
+@keyframes px-asm-left {
+  0%, 16.67%  { transform: translate(0, 0); }
+  33.33%      { transform: translate(-2.5px, 1.5px); }
+  50%         { transform: translate(-9px, 4.5px); }
+  66.67%      { transform: translate(-3.5px, 2px); }
+  83.33%      { transform: translate(0, 0); }
+}
+@keyframes px-asm-right {
+  0%, 16.67%  { transform: translate(0, 0); }
+  33.33%      { transform: translate(2.5px, 1.5px); }
+  50%         { transform: translate(9px, 4.5px); }
+  66.67%      { transform: translate(3.5px, 2px); }
+  83.33%      { transform: translate(0, 0); }
 }
 
 /* ── Light mode pixel cube ───────────────────────── */
 .light .px-top   { fill: #6366f1; }
 .light .px-left  { fill: #4338a0; }
 .light .px-right { fill: #2d2570; }
-.light .px-cube  { animation-name: px-spin-light; }
-
-@keyframes px-spin-light {
-  from { filter: hue-rotate(0deg)   drop-shadow(0 0 3px rgba(99,102,241,.9)) drop-shadow(0 0 8px rgba(99,102,241,.4)); }
-  to   { filter: hue-rotate(360deg) drop-shadow(0 0 3px rgba(99,102,241,.9)) drop-shadow(0 0 8px rgba(99,102,241,.4)); }
+.light .px-cube {
+  filter: drop-shadow(0 0 3px rgba(99,102,241,.85)) drop-shadow(0 0 9px rgba(99,102,241,.32));
 }
 
 

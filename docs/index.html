@@ -179,28 +179,72 @@
 
     /* ── Pixel Art Isometric Cube ── */
     .cw { display:inline-block; }
-    /* 复古像素风格：平面等距立方体，step动画模拟帧动画 */
+    /* 复古像素风格：平面等距立方体，分解重组帧动画（step-end 跳帧） */
     .px-cube {
       display: block;
       shape-rendering: crispEdges;
       overflow: visible;
-      animation: px-spin 5.6s steps(8, end) infinite;
-      will-change: filter;
+      filter: drop-shadow(0 0 3px rgba(0,245,255,.85)) drop-shadow(0 0 9px rgba(0,245,255,.32));
     }
     .px-cube-lg {
-      animation: px-spin-lg 5.6s steps(8, end) infinite;
+      filter: drop-shadow(0 0 8px rgba(0,245,255,.9)) drop-shadow(0 0 22px rgba(0,245,255,.42)) drop-shadow(0 0 44px rgba(0,245,255,.18));
     }
     .px-top   { fill: #00f5ff; }
     .px-left  { fill: #007a8f; }
     .px-right { fill: #004055; }
 
-    @keyframes px-spin {
-      from { filter: hue-rotate(0deg)   drop-shadow(0 0 3px rgba(0,245,255,.95)) drop-shadow(0 0 8px rgba(0,245,255,.4)); }
-      to   { filter: hue-rotate(360deg) drop-shadow(0 0 3px rgba(0,245,255,.95)) drop-shadow(0 0 8px rgba(0,245,255,.4)); }
+    /* 分解重组逐帧动画 — 6帧 step-end 跳帧 */
+    .px-cube .px-top   { animation: px-asm-top   3.6s step-end infinite; }
+    .px-cube .px-left  { animation: px-asm-left  3.6s step-end infinite; }
+    .px-cube .px-right { animation: px-asm-right 3.6s step-end infinite; }
+    /* Hero 大版本 override */
+    .px-cube-lg .px-top   { animation-name: px-asm-top-lg; }
+    .px-cube-lg .px-left  { animation-name: px-asm-left-lg; }
+    .px-cube-lg .px-right { animation-name: px-asm-right-lg; }
+
+    /* 小（24px）关键帧 */
+    @keyframes px-asm-top {
+      0%, 16.67%  { transform: translate(0, 0); }
+      33.33%      { transform: translate(0, -3px); }
+      50%         { transform: translate(0, -10px); }
+      66.67%      { transform: translate(0, -4px); }
+      83.33%      { transform: translate(0, 0); }
     }
-    @keyframes px-spin-lg {
-      from { filter: hue-rotate(0deg)   drop-shadow(0 0 8px rgba(0,245,255,.95)) drop-shadow(0 0 22px rgba(0,245,255,.45)) drop-shadow(0 0 42px rgba(0,245,255,.18)); }
-      to   { filter: hue-rotate(360deg) drop-shadow(0 0 8px rgba(0,245,255,.95)) drop-shadow(0 0 22px rgba(0,245,255,.45)) drop-shadow(0 0 42px rgba(0,245,255,.18)); }
+    @keyframes px-asm-left {
+      0%, 16.67%  { transform: translate(0, 0); }
+      33.33%      { transform: translate(-2.5px, 1.5px); }
+      50%         { transform: translate(-9px, 4.5px); }
+      66.67%      { transform: translate(-3.5px, 2px); }
+      83.33%      { transform: translate(0, 0); }
+    }
+    @keyframes px-asm-right {
+      0%, 16.67%  { transform: translate(0, 0); }
+      33.33%      { transform: translate(2.5px, 1.5px); }
+      50%         { transform: translate(9px, 4.5px); }
+      66.67%      { transform: translate(3.5px, 2px); }
+      83.33%      { transform: translate(0, 0); }
+    }
+    /* 大（120px hero）关键帧 */
+    @keyframes px-asm-top-lg {
+      0%, 16.67%  { transform: translate(0, 0); }
+      33.33%      { transform: translate(0, -15px); }
+      50%         { transform: translate(0, -50px); }
+      66.67%      { transform: translate(0, -20px); }
+      83.33%      { transform: translate(0, 0); }
+    }
+    @keyframes px-asm-left-lg {
+      0%, 16.67%  { transform: translate(0, 0); }
+      33.33%      { transform: translate(-13px, 7px); }
+      50%         { transform: translate(-43px, 22px); }
+      66.67%      { transform: translate(-17px, 9px); }
+      83.33%      { transform: translate(0, 0); }
+    }
+    @keyframes px-asm-right-lg {
+      0%, 16.67%  { transform: translate(0, 0); }
+      33.33%      { transform: translate(13px, 7px); }
+      50%         { transform: translate(43px, 22px); }
+      66.67%      { transform: translate(17px, 9px); }
+      83.33%      { transform: translate(0, 0); }
     }
 
     /* ── Nav ── */
@@ -225,7 +269,7 @@
 
     /* ── Reduced motion ── */
     @media (prefers-reduced-motion: reduce) {
-      .glitch, .px-cube, .neon-cyan { animation:none; }
+      .glitch, .px-top, .px-left, .px-right, .neon-cyan { animation:none; }
       .rv { opacity:1; transform:none; transition:none; }
       .card-c:hover,.card-p:hover,.btn-cta:hover,.btn-ghost:hover { transform:none; }
     }
