@@ -179,7 +179,7 @@
 
     /* ── 3D Cube ── */
     .cw { perspective:220px; display:inline-block; }
-    .c3 { position:relative; transform-style:preserve-3d; animation:cspin 6s linear infinite; }
+    .c3 { position:relative; transform-style:preserve-3d; animation:cspin 6s linear infinite; will-change:transform; }
     .cf { position:absolute; border:2px solid; }
     .cf-fr { transform:translateZ(var(--tz)); background:rgba(0,245,255,.1);   border-color:rgba(0,245,255,.9);   box-shadow:0 0 14px rgba(0,245,255,.55),inset 0 0 10px rgba(0,245,255,.08); }
     .cf-bk { transform:rotateY(180deg) translateZ(var(--tz)); background:rgba(0,245,255,.04);  border-color:rgba(0,245,255,.22); }
@@ -188,8 +188,8 @@
     .cf-tp { transform:rotateX(90deg)  translateZ(var(--tz)); background:rgba(244,63,94,.1);   border-color:rgba(244,63,94,.7);   box-shadow:0 0 10px rgba(244,63,94,.4); }
     .cf-bt { transform:rotateX(-90deg) translateZ(var(--tz)); background:rgba(0,0,0,.35);      border-color:rgba(255,255,255,.08); }
     @keyframes cspin {
-      from { transform:rotateX(-22deg) rotateY(0deg); }
-      to   { transform:rotateX(-22deg) rotateY(360deg); }
+      from { transform: rotateY(0deg)   rotateX(-22deg); }
+      to   { transform: rotateY(360deg) rotateX(-22deg); }
     }
 
     /* ── Nav ── */
