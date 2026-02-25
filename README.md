@@ -28,8 +28,9 @@
 |------|------|
 | `*_aarch64.dmg` | macOS Apple Silicon（M1/M2/M3/M4） |
 | `*_x64.dmg` | macOS Intel |
-| `*_x64-setup.exe` | Windows 64 位（推荐） |
-| `*_x64_en-US.msi` | Windows 64 位（MSI） |
+| `*_x64-setup.exe` | Windows 64 位安装版（推荐） |
+| `*_x64_en-US.msi` | Windows 64 位 MSI |
+| `*_x64_portable.zip` | Windows 64 位便携版（解压即用，无需安装） |
 
 > **macOS 首次启动**：若提示「无法验证开发者」，前往 **系统设置 → 隐私与安全性** 点击「仍要打开」。
 
