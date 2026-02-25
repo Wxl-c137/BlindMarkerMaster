@@ -71,8 +71,21 @@ jobs:
             |------|------|
             | `*_aarch64.dmg` | macOS Apple Silicon（M1/M2/M3） |
             | `*_x64.dmg` | macOS Intel |
-            | `*_x64-setup.exe` | Windows 64位（推荐） |
-            | `*_x64_en-US.msi` | Windows 64位（MSI） |
+            | `*_x64-setup.exe` | Windows 64位安装版（推荐） |
+            | `*_x64_en-US.msi` | Windows 64位 MSI |
+            | `*_x64_portable.zip` | Windows 64位便携版（无需安装，解压即用） |
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
+
+      - name: Package Windows portable zip
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart("v")
+          $exe = "src-tauri/target/${{ matrix.target }}/release/blindmark-master.exe"
+          $zipName = "BlindMark.Master_${version}_x64_portable.zip"
+          Compress-Archive -Path $exe -DestinationPath $zipName
+          gh release upload "${{ github.ref_name }}" $zipName --clobber
