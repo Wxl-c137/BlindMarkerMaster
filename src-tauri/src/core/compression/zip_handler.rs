@@ -1,20 +1,87 @@
 use std::path::Path;
 use std::fs::{self, File};
 use std::io;
-use zip::{ZipArchive, ZipWriter, write::SimpleFileOptions, CompressionMethod};
+use std::path::PathBuf;
+use crc32fast::Hasher as Crc32Hasher;
+use encoding_rs::GBK;
+use zip::{ZipArchive, ZipWriter, write::FullFileOptions, CompressionMethod, HasZipMetadata};
 use rayon::prelude::*;
 use walkdir::WalkDir;
 use crate::core::compression::common::ArchiveHandler;
 use crate::models::BlindMarkError;
 
-/// Build base FileOptions with platform-appropriate settings.
+/// Detect and decode a ZIP entry filename from its raw bytes.
 ///
-/// - On Unix: sets unix_permissions(0o755) so extracted files are executable
-/// - On all platforms: zip 2.x automatically sets the UTF-8 General Purpose
-///   Bit Flag (bit 11) for any non-ASCII filename, so Chinese and other
-///   non-ASCII names are always encoded as UTF-8 in the output archive.
-fn base_opts(method: CompressionMethod, level: Option<i64>) -> SimpleFileOptions {
-    let mut opts = SimpleFileOptions::default().compression_method(method);
+/// ZIP archives may store filenames in several encodings depending on which
+/// tool created them:
+///
+/// | Scenario                          | `is_utf8` | Raw bytes       | Action           |
+/// |-----------------------------------|-----------|-----------------|------------------|
+/// | Modern ZIP (EFS flag or 0x7075)   | true      | UTF-8           | Use directly     |
+/// | Modern ZIP, no EFS flag           | false     | UTF-8           | Valid UTF-8 → OK |
+/// | Old Chinese Windows ZIP           | false     | GBK / GB2312    | GBK decode       |
+/// | Other / mixed                     | false     | CP437 / unknown | Lossy UTF-8      |
+fn decode_zip_filename(raw: &[u8], is_utf8: bool) -> String {
+    // EFS flag set or pure ASCII → trust the zip crate's decoding.
+    if is_utf8 || raw.is_ascii() {
+        return String::from_utf8_lossy(raw).into_owned();
+    }
+
+    // Non-ASCII bytes without EFS flag.
+    // 1. Try strict UTF-8 first: many modern tools omit the EFS flag but still
+    //    write UTF-8 filenames (e.g. some macOS / Linux tools).
+    if let Ok(s) = std::str::from_utf8(raw) {
+        return s.to_owned();
+    }
+
+    // 2. Not valid UTF-8 → try GBK.  This is the standard encoding for
+    //    filenames in ZIPs created by Windows Explorer and many older Chinese
+    //    Windows tools (WinZip, 好压, 360压缩, etc.).
+    let (cow, _enc, had_errors) = GBK.decode(raw);
+    if !had_errors {
+        return cow.into_owned();
+    }
+
+    // 3. GBK also had replacement characters → last resort: lossy UTF-8.
+    String::from_utf8_lossy(raw).into_owned()
+}
+
+/// Sanitize a decoded ZIP filename to prevent path-traversal attacks.
+///
+/// Replicates the logic of `ZipFile::enclosed_name()` but works on an
+/// arbitrary `&str` (needed after we re-decode the filename ourselves).
+fn sanitize_zip_path(name: &str) -> Option<PathBuf> {
+    if name.contains('\0') {
+        return None;
+    }
+    let path = PathBuf::from(name);
+    let mut depth: usize = 0;
+    for component in path.components() {
+        match component {
+            std::path::Component::Prefix(_) | std::path::Component::RootDir => return None,
+            std::path::Component::ParentDir => depth = depth.checked_sub(1)?,
+            std::path::Component::Normal(_) => depth += 1,
+            std::path::Component::CurDir => {}
+        }
+    }
+    Some(path)
+}
+
+/// Build `FullFileOptions` with the Unicode Path Extra Field (tag 0x7075).
+///
+/// zip 2.x sets the EFS flag (bit 11 of General Purpose Bit Flag) for any
+/// non-ASCII filename, which marks the filename as UTF-8. However, Windows
+/// File Explorer on some versions ignores the EFS flag and decodes filenames
+/// using the system OEM codepage (e.g. GBK/CP936 on Chinese Windows).
+///
+/// The Unicode Path Extra Field is a more explicit signal that is respected by
+/// Windows File Explorer (modern versions), 7-Zip, WinRAR, and other tools.
+/// Its body contains:
+///   - Version:  0x01  (1 byte)
+///   - CRC-32:   CRC32 of the raw filename bytes in the local header (4 bytes LE)
+///   - UniName:  UTF-8 encoded filename (N bytes)
+fn file_opts(method: CompressionMethod, level: Option<i64>, stored_name: &str) -> Result<FullFileOptions<'static>, BlindMarkError> {
+    let mut opts = FullFileOptions::default().compression_method(method);
     #[cfg(unix)]
     {
         opts = opts.unix_permissions(0o755);
@@ -22,7 +89,24 @@ fn base_opts(method: CompressionMethod, level: Option<i64>) -> SimpleFileOptions
     if let Some(lvl) = level {
         opts = opts.compression_level(Some(lvl));
     }
-    opts
+
+    // Build the Unicode Path Extra Field body
+    let name_bytes = stored_name.as_bytes();
+    let mut hasher = Crc32Hasher::new();
+    hasher.update(name_bytes);
+    let crc = hasher.finalize();
+
+    let mut body = Vec::with_capacity(5 + name_bytes.len());
+    body.push(0x01u8);                           // Version 1
+    body.extend_from_slice(&crc.to_le_bytes());  // CRC-32 of raw filename
+    body.extend_from_slice(name_bytes);           // UTF-8 filename
+
+    opts.add_extra_data(0x7075, body.into_boxed_slice(), false)
+        .map_err(|e| BlindMarkError::Archive(
+            format!("Failed to add Unicode path extra field for '{}': {}", stored_name, e)
+        ))?;
+
+    Ok(opts)
 }
 
 /// ZIP archive handler
@@ -71,9 +155,20 @@ impl ArchiveHandler for ZipHandler {
                     format!("Failed to read file at index {}: {}", i, e)
                 ))?;
 
-            let file_path = match file.enclosed_name() {
-                Some(path) => path.to_owned(),
-                None => continue, // Skip files with invalid names
+            // --- Encoding-aware filename decoding ---
+            // Copy needed fields before borrowing `file` for I/O.
+            // zip 2.x already handles the EFS flag (bit 11) and the Unicode
+            // Path Extra Field (0x7075); is_utf8 reflects both.
+            let (is_utf8, raw_name) = {
+                let meta = file.get_metadata();
+                (meta.is_utf8, meta.file_name_raw.to_vec())
+            };
+            let decoded_name = decode_zip_filename(&raw_name, is_utf8);
+
+            // Sanitize to prevent path-traversal (replaces enclosed_name()).
+            let file_path = match sanitize_zip_path(&decoded_name) {
+                Some(p) => p,
+                None => continue, // Skip invalid / unsafe paths
             };
 
             let output_path = dest_dir.join(&file_path);
@@ -173,9 +268,16 @@ impl ArchiveHandler for ZipHandler {
         let mut zip = ZipWriter::new(file);
 
         for name in dir_names {
-            zip.add_directory(&name, base_opts(CompressionMethod::Stored, None))
+            // Ensure trailing slash so the CRC matches what zip stores in the local header.
+            let stored_name = if name.ends_with('/') {
+                name.clone()
+            } else {
+                format!("{}/", name)
+            };
+            let opts = file_opts(CompressionMethod::Stored, None, &stored_name)?;
+            zip.add_directory(&stored_name, opts)
                 .map_err(|e| BlindMarkError::Archive(
-                    format!("Failed to add directory {} to archive: {}", name, e)
+                    format!("Failed to add directory {} to archive: {}", stored_name, e)
                 ))?;
         }
 
@@ -183,9 +285,9 @@ impl ArchiveHandler for ZipHandler {
             // Already-compressed formats: store as-is (zero CPU cost)
             // Text/binary formats: fast Deflate level 1
             let opts = if is_already_compressed(&name) {
-                base_opts(CompressionMethod::Stored, None)
+                file_opts(CompressionMethod::Stored, None, &name)?
             } else {
-                base_opts(CompressionMethod::Deflated, Some(1))
+                file_opts(CompressionMethod::Deflated, Some(1), &name)?
             };
 
             zip.start_file(&name, opts)
