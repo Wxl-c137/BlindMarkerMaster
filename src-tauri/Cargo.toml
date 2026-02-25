@@ -30,7 +30,6 @@ md-5 = "0.10"
 zip = { version = "2.1", features = ["deflate"] }
 sevenz-rust = "0.6"
 encoding_rs = "0.8"
-crc32fast = "1"
 # Note: unrar support requires system library
 
 # Excel reading

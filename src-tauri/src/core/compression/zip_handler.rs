@@ -66,32 +66,15 @@ fn sanitize_zip_path(name: &str) -> Option<PathBuf> {
     Some(path)
 }
 
-/// Build the payload for a Unicode Path Extra Field (tag 0x7075).
-///
-/// Format: version(1) + CRC32-of-LFH-name(4) + UTF-8-name(n)
-///
-/// When the EFS flag (bit 11) is set the Local File Header already stores the
-/// name as UTF-8, so the CRC32 is computed over those same UTF-8 bytes.
-/// Adding this field gives Windows tools that do not honour the EFS flag
-/// (e.g. older Windows Explorer, some third-party archivers) a second chance
-/// to recognise the UTF-8 encoding.
-fn unicode_path_extra_field(utf8_name: &str) -> Box<[u8]> {
-    let name_bytes = utf8_name.as_bytes();
-    let crc = crc32fast::hash(name_bytes);
-    let mut data = Vec::with_capacity(1 + 4 + name_bytes.len());
-    data.push(1u8);                                  // version = 1
-    data.extend_from_slice(&crc.to_le_bytes());      // CRC32 of LFH filename
-    data.extend_from_slice(name_bytes);               // UTF-8 filename
-    data.into_boxed_slice()
-}
-
 /// Build `FullFileOptions` for a ZIP entry.
 ///
-/// zip 2.x automatically sets the EFS flag (bit 11 of General Purpose Bit Flag)
-/// for any non-ASCII filename.  In addition we inject a Unicode Path Extra
-/// Field (0x7075) so that Windows tools which ignore the EFS flag can still
-/// decode the filename correctly.
-fn file_opts(method: CompressionMethod, level: Option<i64>, name: &str) -> Result<FullFileOptions<'static>, BlindMarkError> {
+/// zip 2.x 对任何非 ASCII 文件名自动设置 EFS 标志（通用标志位 bit 11），
+/// 直接将文件名以 UTF-8 写入本地文件头，所有现代工具均能正确识别。
+/// 无需手动注入 Unicode Path Extra Field（0x7075），否则 zip 库内部会
+/// 校验 payload 里的 CRC32 与实际写入的文件名字节是否一致，对目录条目
+/// 等特殊情况容易产生不匹配而报错。
+fn file_opts(method: CompressionMethod, level: Option<i64>, _name: &str) -> Result<FullFileOptions<'static>, BlindMarkError> {
+    // EFS 标志由 zip 库自动处理，此处不再手动添加 0x7075 字段
     let mut opts = FullFileOptions::default().compression_method(method);
     #[cfg(unix)]
     {
@@ -99,15 +82,6 @@ fn file_opts(method: CompressionMethod, level: Option<i64>, name: &str) -> Resul
     }
     if let Some(lvl) = level {
         opts = opts.compression_level(Some(lvl));
-    }
-    // Add Unicode Path Extra Field for non-ASCII names so Windows tools that
-    // do not support the EFS flag can still decode the filename as UTF-8.
-    if !name.is_ascii() {
-        let extra = unicode_path_extra_field(name);
-        opts.add_extra_data(0x7075, extra, false)
-            .map_err(|e| BlindMarkError::Archive(
-                format!("Failed to add Unicode path extra field for '{}': {}", name, e)
-            ))?;
     }
     Ok(opts)
 }
