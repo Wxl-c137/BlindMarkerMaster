@@ -1,35 +1,20 @@
 use std::path::Path;
 use std::fs::{self, File};
 use std::io;
-use zip::{ZipArchive, ZipWriter, write::FullFileOptions, CompressionMethod};
+use zip::{ZipArchive, ZipWriter, write::SimpleFileOptions, CompressionMethod};
 use rayon::prelude::*;
 use walkdir::WalkDir;
 use crate::core::compression::common::ArchiveHandler;
 use crate::models::BlindMarkError;
 
-/// Build an Info-ZIP Unicode Path Extra Field (tag 0x7075) for `name`.
+/// Build base FileOptions with platform-appropriate settings.
 ///
-/// Format: version(1) + crc32_of_name(4) + utf8_name(N)
-///
-/// Passing this extra field to every ZIP entry ensures all readers
-/// treat the filename as UTF-8 regardless of the General Purpose Bit Flag.
-fn unicode_path_extra_data(name: &str) -> Box<[u8]> {
-    let name_bytes = name.as_bytes();
-    let crc = crc32fast::hash(name_bytes);
-    let mut buf = Vec::with_capacity(5 + name_bytes.len());
-    buf.push(0x01u8);                          // version
-    buf.extend_from_slice(&crc.to_le_bytes()); // CRC32 of the original name field
-    buf.extend_from_slice(name_bytes);         // UTF-8 encoded name
-    buf.into_boxed_slice()
-}
-
-/// Create FullFileOptions with UTF-8 extra field attached.
-fn make_opts(
-    name: &str,
-    method: CompressionMethod,
-    level: Option<i64>,
-) -> Result<FullFileOptions<'static>, BlindMarkError> {
-    let mut opts = FullFileOptions::default().compression_method(method);
+/// - On Unix: sets unix_permissions(0o755) so extracted files are executable
+/// - On all platforms: zip 2.x automatically sets the UTF-8 General Purpose
+///   Bit Flag (bit 11) for any non-ASCII filename, so Chinese and other
+///   non-ASCII names are always encoded as UTF-8 in the output archive.
+fn base_opts(method: CompressionMethod, level: Option<i64>) -> SimpleFileOptions {
+    let mut opts = SimpleFileOptions::default().compression_method(method);
     #[cfg(unix)]
     {
         opts = opts.unix_permissions(0o755);
@@ -37,11 +22,7 @@ fn make_opts(
     if let Some(lvl) = level {
         opts = opts.compression_level(Some(lvl));
     }
-    opts.add_extra_data(0x7075, unicode_path_extra_data(name), false)
-        .map_err(|e| BlindMarkError::Archive(
-            format!("Failed to add Unicode extra field for {}: {}", name, e)
-        ))?;
-    Ok(opts)
+    opts
 }
 
 /// ZIP archive handler
@@ -192,8 +173,7 @@ impl ArchiveHandler for ZipHandler {
         let mut zip = ZipWriter::new(file);
 
         for name in dir_names {
-            let opts = make_opts(&name, CompressionMethod::Stored, None)?;
-            zip.add_directory(&name, opts)
+            zip.add_directory(&name, base_opts(CompressionMethod::Stored, None))
                 .map_err(|e| BlindMarkError::Archive(
                     format!("Failed to add directory {} to archive: {}", name, e)
                 ))?;
@@ -203,9 +183,9 @@ impl ArchiveHandler for ZipHandler {
             // Already-compressed formats: store as-is (zero CPU cost)
             // Text/binary formats: fast Deflate level 1
             let opts = if is_already_compressed(&name) {
-                make_opts(&name, CompressionMethod::Stored, None)?
+                base_opts(CompressionMethod::Stored, None)
             } else {
-                make_opts(&name, CompressionMethod::Deflated, Some(1))?
+                base_opts(CompressionMethod::Deflated, Some(1))
             };
 
             zip.start_file(&name, opts)
