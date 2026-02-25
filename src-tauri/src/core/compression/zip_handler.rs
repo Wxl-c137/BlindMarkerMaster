@@ -2,9 +2,8 @@ use std::path::Path;
 use std::fs::{self, File};
 use std::io;
 use std::path::PathBuf;
-use crc32fast::Hasher as Crc32Hasher;
 use encoding_rs::GBK;
-use zip::{ZipArchive, ZipWriter, write::FullFileOptions, CompressionMethod, HasZipMetadata};
+use zip::{ZipArchive, ZipWriter, write::SimpleFileOptions, CompressionMethod, HasZipMetadata};
 use rayon::prelude::*;
 use walkdir::WalkDir;
 use crate::core::compression::common::ArchiveHandler;
@@ -67,21 +66,14 @@ fn sanitize_zip_path(name: &str) -> Option<PathBuf> {
     Some(path)
 }
 
-/// Build `FullFileOptions` with the Unicode Path Extra Field (tag 0x7075).
+/// Build `SimpleFileOptions` for a ZIP entry.
 ///
-/// zip 2.x sets the EFS flag (bit 11 of General Purpose Bit Flag) for any
-/// non-ASCII filename, which marks the filename as UTF-8. However, Windows
-/// File Explorer on some versions ignores the EFS flag and decodes filenames
-/// using the system OEM codepage (e.g. GBK/CP936 on Chinese Windows).
-///
-/// The Unicode Path Extra Field is a more explicit signal that is respected by
-/// Windows File Explorer (modern versions), 7-Zip, WinRAR, and other tools.
-/// Its body contains:
-///   - Version:  0x01  (1 byte)
-///   - CRC-32:   CRC32 of the raw filename bytes in the local header (4 bytes LE)
-///   - UniName:  UTF-8 encoded filename (N bytes)
-fn file_opts(method: CompressionMethod, level: Option<i64>, stored_name: &str) -> Result<FullFileOptions<'static>, BlindMarkError> {
-    let mut opts = FullFileOptions::default().compression_method(method);
+/// zip 2.x automatically sets the EFS flag (bit 11 of General Purpose Bit Flag)
+/// for any non-ASCII filename, which is the standard way to indicate UTF-8
+/// encoding. All modern tools (Windows 10+, 7-Zip, WinRAR, macOS, Linux)
+/// support this flag, so no additional Unicode extra field is required.
+fn file_opts(method: CompressionMethod, level: Option<i64>) -> SimpleFileOptions {
+    let mut opts = SimpleFileOptions::default().compression_method(method);
     #[cfg(unix)]
     {
         opts = opts.unix_permissions(0o755);
@@ -89,24 +81,7 @@ fn file_opts(method: CompressionMethod, level: Option<i64>, stored_name: &str) -
     if let Some(lvl) = level {
         opts = opts.compression_level(Some(lvl));
     }
-
-    // Build the Unicode Path Extra Field body
-    let name_bytes = stored_name.as_bytes();
-    let mut hasher = Crc32Hasher::new();
-    hasher.update(name_bytes);
-    let crc = hasher.finalize();
-
-    let mut body = Vec::with_capacity(5 + name_bytes.len());
-    body.push(0x01u8);                           // Version 1
-    body.extend_from_slice(&crc.to_le_bytes());  // CRC-32 of raw filename
-    body.extend_from_slice(name_bytes);           // UTF-8 filename
-
-    opts.add_extra_data(0x7075, body.into_boxed_slice(), false)
-        .map_err(|e| BlindMarkError::Archive(
-            format!("Failed to add Unicode path extra field for '{}': {}", stored_name, e)
-        ))?;
-
-    Ok(opts)
+    opts
 }
 
 /// ZIP archive handler
@@ -268,13 +243,12 @@ impl ArchiveHandler for ZipHandler {
         let mut zip = ZipWriter::new(file);
 
         for name in dir_names {
-            // Ensure trailing slash so the CRC matches what zip stores in the local header.
             let stored_name = if name.ends_with('/') {
                 name.clone()
             } else {
                 format!("{}/", name)
             };
-            let opts = file_opts(CompressionMethod::Stored, None, &stored_name)?;
+            let opts = file_opts(CompressionMethod::Stored, None);
             zip.add_directory(&stored_name, opts)
                 .map_err(|e| BlindMarkError::Archive(
                     format!("Failed to add directory {} to archive: {}", stored_name, e)
@@ -285,9 +259,9 @@ impl ArchiveHandler for ZipHandler {
             // Already-compressed formats: store as-is (zero CPU cost)
             // Text/binary formats: fast Deflate level 1
             let opts = if is_already_compressed(&name) {
-                file_opts(CompressionMethod::Stored, None, &name)?
+                file_opts(CompressionMethod::Stored, None)
             } else {
-                file_opts(CompressionMethod::Deflated, Some(1), &name)?
+                file_opts(CompressionMethod::Deflated, Some(1))
             };
 
             zip.start_file(&name, opts)

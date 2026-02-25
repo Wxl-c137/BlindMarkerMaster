@@ -1,6 +1,6 @@
 [package]
 name = "blindmark-master"
-version = "0.2.5"
+version = "0.2.6"
 edition = "2021"
 
 [lib]
@@ -29,7 +29,6 @@ md-5 = "0.10"
 # Archive handling
 zip = { version = "2.1", features = ["deflate"] }
 sevenz-rust = "0.6"
-crc32fast = "1"
 encoding_rs = "0.8"
 # Note: unrar support requires system library
 
