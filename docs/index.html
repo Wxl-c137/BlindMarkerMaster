@@ -257,6 +257,7 @@
       <a href="#features"     class="nlink hidden sm:block">功能</a>
       <a href="#how-it-works" class="nlink hidden sm:block">用法</a>
       <a href="#faq"          class="nlink hidden sm:block">FAQ</a>
+      <a href="#changelog"    class="nlink hidden sm:block">日志</a>
       <a href="#download"
          class="btn-ghost text-xs px-4 py-2 rounded-lg cursor-pointer">
         下载
@@ -607,6 +608,87 @@
       <div class="card-p rounded-xl p-5 rv">
         <h3 class="text-sm font-semibold mb-2" style="color:rgba(168,85,247,.9);">处理大型压缩包时如何加速？</h3>
         <p class="text-sm" style="color:rgba(255,255,255,.52);line-height:1.7;">开启<strong style="color:rgba(255,255,255,.8);">高速模式</strong>后，超过 512 px 的图片仅处理左上角 512×512 区域，速度可提升 4–10 倍。数据文件（JSON/VAJ/VMI）已使用全核并行处理。</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="hr"></div>
+
+
+<!-- ════════════════════════════════════════ CHANGELOG -->
+<section id="changelog" class="py-28 px-4 grid-bg">
+  <div class="max-w-3xl mx-auto">
+
+    <div class="text-center mb-16 rv">
+      <p class="slabel mb-3">版本历史</p>
+      <h2 class="heading text-3xl sm:text-4xl" style="color:rgba(255,255,255,.9);">CHANGELOG</h2>
+    </div>
+
+    <div class="space-y-4">
+
+      <!-- v0.2.9 -->
+      <div class="card-c rounded-2xl p-6 rv">
+        <div class="flex flex-wrap items-center gap-3 mb-4">
+          <span class="heading text-sm" style="color:#00f5ff;letter-spacing:.1em;">v0.2.9</span>
+          <span class="tag tag-g">改进</span>
+          <span class="text-xs" style="color:rgba(255,255,255,.3);">2025-02</span>
+        </div>
+        <h3 class="text-sm font-semibold mb-3" style="color:rgba(255,255,255,.8);">BOM 自动检测 &amp; 编码统一</h3>
+        <ul class="space-y-2.5 text-xs" style="color:rgba(255,255,255,.5);line-height:1.7;">
+          <li class="flex gap-2.5 items-start"><span class="tag tag-g shrink-0 mt-px">改进</span>JSON / VAJ / VMI 读取时自动剥离 UTF-8 BOM，兼容 Windows 记事本等工具生成的文件</li>
+          <li class="flex gap-2.5 items-start"><span class="tag tag-g shrink-0 mt-px">改进</span>输出文件统一添加 UTF-8 BOM，Excel / 记事本直接打开无乱码</li>
+          <li class="flex gap-2.5 items-start"><span class="tag tag-c shrink-0 mt-px">调整</span>文本输入编码统一为 UTF-8，移除 GBK 回退路径，错误提示更明确</li>
+        </ul>
+      </div>
+
+      <!-- v0.2.8 -->
+      <div class="card-c rounded-2xl p-6 rv">
+        <div class="flex flex-wrap items-center gap-3 mb-4">
+          <span class="heading text-sm" style="color:#00f5ff;letter-spacing:.1em;">v0.2.8</span>
+          <span class="tag tag-r">修复</span>
+          <span class="text-xs" style="color:rgba(255,255,255,.3);">2025-02</span>
+        </div>
+        <h3 class="text-sm font-semibold mb-3" style="color:rgba(255,255,255,.8);">ZIP Unicode 修复 &amp; CI/CD 上线</h3>
+        <ul class="space-y-2.5 text-xs" style="color:rgba(255,255,255,.5);line-height:1.7;">
+          <li class="flex gap-2.5 items-start"><span class="tag tag-r shrink-0 mt-px">修复</span>彻底解决 ZIP 打包时 Unicode 扩展字段 CRC32 校验失败问题，移除手动 0x7075 注入逻辑</li>
+          <li class="flex gap-2.5 items-start"><span class="tag tag-g shrink-0 mt-px">新增</span>GitHub Actions CI：TypeScript 编译检查 + Rust 单元测试，每次推送自动运行</li>
+          <li class="flex gap-2.5 items-start"><span class="tag tag-g shrink-0 mt-px">新增</span>Release 构建新增 Linux x64（AppImage + .deb）发行版</li>
+        </ul>
+      </div>
+
+      <!-- v0.2.7 -->
+      <div class="card-p rounded-2xl p-6 rv">
+        <div class="flex flex-wrap items-center gap-3 mb-4">
+          <span class="heading text-sm" style="color:#a855f7;letter-spacing:.1em;">v0.2.7</span>
+          <span class="tag tag-r">修复</span>
+          <span class="text-xs" style="color:rgba(255,255,255,.3);">2025-01</span>
+        </div>
+        <h3 class="text-sm font-semibold mb-3" style="color:rgba(255,255,255,.8);">ZIP 中文文件名编码修复</h3>
+        <ul class="space-y-2.5 text-xs" style="color:rgba(255,255,255,.5);line-height:1.7;">
+          <li class="flex gap-2.5 items-start"><span class="tag tag-r shrink-0 mt-px">修复</span>解压旧版 ZIP 时中文文件名乱码，新增 GBK 回退解码兼容老 Windows 工具</li>
+          <li class="flex gap-2.5 items-start"><span class="tag tag-r shrink-0 mt-px">修复</span>ZIP Unicode 扩展字段 CRC32 校验失败（部分场景）</li>
+          <li class="flex gap-2.5 items-start"><span class="tag tag-g shrink-0 mt-px">新增</span>Windows 便携版（.zip 无需安装，解压即用）</li>
+        </ul>
+      </div>
+
+      <!-- v0.2.0 – v0.2.6 -->
+      <div class="card-p rounded-2xl p-6 rv">
+        <div class="flex flex-wrap items-center gap-3 mb-4">
+          <span class="heading text-sm" style="color:#a855f7;letter-spacing:.1em;">v0.2.0 – v0.2.6</span>
+          <span class="tag tag-p">历史</span>
+        </div>
+        <h3 class="text-sm font-semibold mb-3" style="color:rgba(255,255,255,.8);">核心功能构建阶段</h3>
+        <ul class="space-y-2.5 text-xs" style="color:rgba(255,255,255,.5);line-height:1.7;">
+          <li class="flex gap-2.5 items-start"><span class="tag tag-g shrink-0 mt-px">新增</span>DWT + DCT 频域盲水印嵌入与提取（Haar 小波 + 8×8 DCT 块）</li>
+          <li class="flex gap-2.5 items-start"><span class="tag tag-g shrink-0 mt-px">新增</span>MD5 / 明文 / AES-256-GCM 三种编码模式</li>
+          <li class="flex gap-2.5 items-start"><span class="tag tag-g shrink-0 mt-px">新增</span>ZIP / 7Z / VAR / RAR 格式支持</li>
+          <li class="flex gap-2.5 items-start"><span class="tag tag-g shrink-0 mt-px">新增</span>Excel 批量水印，按行顺序映射文件</li>
+          <li class="flex gap-2.5 items-start"><span class="tag tag-g shrink-0 mt-px">新增</span>高速模式（仅处理 512×512 区域，速度提升 4–10 倍）</li>
+          <li class="flex gap-2.5 items-start"><span class="tag tag-g shrink-0 mt-px">新增</span>JSON / VAJ / VMI 文件水印混淆（字段乱序 + 噪声值插入）</li>
+          <li class="flex gap-2.5 items-start"><span class="tag tag-g shrink-0 mt-px">新增</span>Rayon 多核并行处理，跨平台桌面应用（macOS / Windows / Linux）</li>
+        </ul>
       </div>
 
     </div>
