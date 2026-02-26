@@ -4,6 +4,8 @@
 
 [![Release](https://img.shields.io/github/v/release/Wxl-c137/BlindMarkerMaster)](https://github.com/Wxl-c137/BlindMarkerMaster/releases)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-blue)](#下载)
+[![CI](https://github.com/Wxl-c137/BlindMarkerMaster/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/Wxl-c137/BlindMarkerMaster/actions/workflows/ci.yml)
+[![Dev Build](https://github.com/Wxl-c137/BlindMarkerMaster/actions/workflows/dev-build.yml/badge.svg)](https://github.com/Wxl-c137/BlindMarkerMaster/actions/workflows/dev-build.yml)
 
 **官网**：[https://wxl-c137.github.io/BlindMarkerMaster/](https://wxl-c137.github.io/BlindMarkerMaster/)
 
