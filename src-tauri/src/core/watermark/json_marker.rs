@@ -266,6 +266,9 @@ impl JsonWatermarker {
 
     /// 从 JSON 内容中提取水印（按指定字段名）
     pub fn extract(content: &str, key: &str) -> Result<String, BlindMarkError> {
+        // read_to_string 不剥离 UTF-8 BOM，BOM 会变成 \u{FEFF} 出现在字符串头部，
+        // 导致 serde_json 解析失败；此处统一剥离。
+        let content = content.trim_start_matches('\u{FEFF}');
         let json: Value = serde_json::from_str(content).map_err(|e| {
             BlindMarkError::ImageProcessing(format!("JSON 解析失败: {}", e))
         })?;
@@ -282,6 +285,7 @@ impl JsonWatermarker {
 
     /// 检查 JSON 内容是否已包含指定水印字段
     pub fn has_watermark(content: &str, key: &str) -> bool {
+        let content = content.trim_start_matches('\u{FEFF}');
         serde_json::from_str::<Value>(content)
             .ok()
             .and_then(|v| v.get(key).cloned())
@@ -409,6 +413,8 @@ impl JsonWatermarker {
         content: &str,
         aes_key: Option<&str>,
     ) -> Vec<(String, String, bool)> {
+        // 剥离可能由 read_to_string 保留的 UTF-8 BOM 字符（\u{FEFF}）
+        let content = content.trim_start_matches('\u{FEFF}');
         let Ok(json) = serde_json::from_str::<Value>(content) else {
             return vec![];
         };
@@ -590,6 +596,30 @@ mod tests {
         let result = JsonWatermarker::embed(json, "test", DEFAULT_WATERMARK_KEY, "md5", None).unwrap();
         let parsed: Value = serde_json::from_str(&result).unwrap();
         assert!(parsed.is_array());
+    }
+
+    /// 回归测试：read_to_string 读取带 BOM 的文件后，字符串首部会出现 \u{FEFF}，
+    /// extract / scan_watermark_values 应能自动剥离并正常提取水印。
+    #[test]
+    fn test_extract_bom_in_str() {
+        // 模拟 embed_bytes 写出的文件内容（UTF-8 with BOM 字节）
+        let json = br#"{"name": "scene"}"#;
+        let watermarked_bytes = JsonWatermarker::embed_bytes(json, "购买者:张三", DEFAULT_WATERMARK_KEY, "md5", None).unwrap();
+
+        // 模拟 std::fs::read_to_string：BOM 字节变为 \u{FEFF} 字符
+        let content_with_bom = String::from_utf8(watermarked_bytes).unwrap();
+        assert!(content_with_bom.starts_with('\u{FEFF}'), "预期字符串以 BOM 字符开头");
+
+        // extract 应能成功提取
+        let extracted = JsonWatermarker::extract(&content_with_bom, DEFAULT_WATERMARK_KEY)
+            .expect("extract 应忽略 BOM 并正确解析 JSON");
+        let expected = WatermarkEncoder::encode("购买者:张三").md5_hash;
+        assert_eq!(extracted, expected);
+
+        // scan_watermark_values 应也能正常工作
+        let findings = JsonWatermarker::scan_watermark_values(&content_with_bom, None);
+        assert!(!findings.is_empty(), "scan_watermark_values 应忽略 BOM 并找到水印");
+        assert_eq!(findings[0].0, expected);
     }
 
     #[test]
