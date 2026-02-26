@@ -5,12 +5,15 @@ use aes_gcm::{
     Aes256Gcm, Key, Nonce,
 };
 use sha2::{Sha256, Digest};
+use encoding_rs::GBK;
 use crate::models::BlindMarkError;
 use crate::core::watermark::encoder::WatermarkEncoder;
 
+/// UTF-8 BOM 字节序列（0xEF 0xBB 0xBF）
+const UTF8_BOM: &[u8] = b"\xef\xbb\xbf";
+
 /// JSON 明文水印注入器
-///
-/// 在 JSON 文件的根对象中添加水印字段，
+////// 在 JSON 文件的根对象中添加水印字段，
 /// 不破坏原有结构和字段，提取时直接读取该字段。
 ///
 /// 适用于 .json / .vaj / .vmi 等基于 JSON 的文件格式。
@@ -20,6 +23,38 @@ pub struct JsonWatermarker;
 pub const DEFAULT_WATERMARK_KEY: &str = "_watermark";
 
 // ─── 私有工具函数 ──────────────────────────────────────────────────────────────
+
+/// 将字节序列智能解码为 UTF-8 字符串。
+///
+/// 处理顺序：
+///   1. 剥离 UTF-8 BOM（如有），避免 serde_json 解析失败
+///   2. 尝试 UTF-8（无损）
+///   3. 尝试 GBK / GB2312（Windows 中文环境保存的 JSON 常见编码）
+///   4. 两者均失败则返回错误
+fn decode_text_bytes(bytes: &[u8]) -> Result<String, BlindMarkError> {
+    let bytes = bytes.strip_prefix(UTF8_BOM).unwrap_or(bytes);
+    if let Ok(s) = std::str::from_utf8(bytes) {
+        return Ok(s.to_owned());
+    }
+    let (cow, _enc, had_errors) = GBK.decode(bytes);
+    if !had_errors {
+        return Ok(cow.into_owned());
+    }
+    Err(BlindMarkError::ImageProcessing(
+        "文件不是有效的 UTF-8 或 GBK 编码".to_string(),
+    ))
+}
+
+/// 将字符串编码为 UTF-8 with BOM 的字节序列。
+///
+/// 写回文件时统一加 BOM，确保 Windows 记事本、VSCode 等工具
+/// 能自动识别 UTF-8 编码，避免中文乱码。
+fn encode_with_bom(content: &str) -> Vec<u8> {
+    let mut out = Vec::with_capacity(UTF8_BOM.len() + content.len());
+    out.extend_from_slice(UTF8_BOM);
+    out.extend_from_slice(content.as_bytes());
+    out
+}
 
 /// 判断字符串是否符合 MD5 格式（32 位小写十六进制）
 fn is_md5_like(s: &str) -> bool {
@@ -252,7 +287,10 @@ impl JsonWatermarker {
             .is_some()
     }
 
-    /// 嵌入水印到 JSON 字节（自动处理 UTF-8 解码/编码）
+    /// 嵌入水印到 JSON 字节
+    ///
+    /// - 自动检测编码（UTF-8 BOM / UTF-8 / GBK），解码后嵌入水印
+    /// - 输出始终为 **UTF-8 with BOM**，确保 Windows 工具正确识别编码
     pub fn embed_bytes(
         bytes: &[u8],
         watermark_text: &str,
@@ -260,19 +298,17 @@ impl JsonWatermarker {
         mode: &str,
         aes_key: Option<&str>,
     ) -> Result<Vec<u8>, BlindMarkError> {
-        let content = std::str::from_utf8(bytes).map_err(|e| {
-            BlindMarkError::ImageProcessing(format!("JSON 文件不是有效 UTF-8: {}", e))
-        })?;
-        let result = Self::embed(content, watermark_text, key, mode, aes_key)?;
-        Ok(result.into_bytes())
+        let content = decode_text_bytes(bytes)?;
+        let result = Self::embed(&content, watermark_text, key, mode, aes_key)?;
+        Ok(encode_with_bom(&result))
     }
 
     /// 从 JSON 字节中提取水印（按字段名）
+    ///
+    /// 自动处理 UTF-8 BOM / UTF-8 / GBK 输入。
     pub fn extract_bytes(bytes: &[u8], key: &str) -> Result<String, BlindMarkError> {
-        let content = std::str::from_utf8(bytes).map_err(|e| {
-            BlindMarkError::ImageProcessing(format!("JSON 文件不是有效 UTF-8: {}", e))
-        })?;
-        Self::extract(content, key)
+        let content = decode_text_bytes(bytes)?;
+        Self::extract(&content, key)
     }
 
     /// 混淆模式嵌入：
@@ -456,6 +492,60 @@ mod tests {
 
         let new_expected = crate::core::watermark::encoder::WatermarkEncoder::encode("new text").md5_hash;
         assert_eq!(extracted, new_expected);
+    }
+
+    #[test]
+    fn test_embed_bytes_output_has_bom() {
+        let json = br#"{"name": "test"}"#;
+        let out = JsonWatermarker::embed_bytes(json, "hello", DEFAULT_WATERMARK_KEY, "md5", None).unwrap();
+        assert_eq!(&out[..3], b"\xef\xbb\xbf", "输出应以 UTF-8 BOM 开头");
+        // BOM 之后应是合法 JSON
+        let content = std::str::from_utf8(&out[3..]).unwrap();
+        let parsed: Value = serde_json::from_str(content).unwrap();
+        assert!(parsed.get(DEFAULT_WATERMARK_KEY).is_some());
+    }
+
+    #[test]
+    fn test_embed_bytes_strips_input_bom() {
+        // 输入带 BOM 的 UTF-8
+        let mut input = b"\xef\xbb\xbf".to_vec();
+        input.extend_from_slice(br#"{"name": "bom_test"}"#);
+        let out = JsonWatermarker::embed_bytes(&input, "hello", DEFAULT_WATERMARK_KEY, "md5", None).unwrap();
+        assert_eq!(&out[..3], b"\xef\xbb\xbf");
+        // 水印正确写入
+        let content = std::str::from_utf8(&out[3..]).unwrap();
+        let parsed: Value = serde_json::from_str(content).unwrap();
+        assert_eq!(parsed["name"], "bom_test");
+    }
+
+    #[test]
+    fn test_extract_bytes_with_bom() {
+        // 先 embed（输出带 BOM），再 extract 应能正常取回水印
+        let json = br#"{"x": 1}"#;
+        let watermarked = JsonWatermarker::embed_bytes(json, "李四", DEFAULT_WATERMARK_KEY, "md5", None).unwrap();
+        let extracted = JsonWatermarker::extract_bytes(&watermarked, DEFAULT_WATERMARK_KEY).unwrap();
+        let expected = WatermarkEncoder::encode("李四").md5_hash;
+        assert_eq!(extracted, expected);
+    }
+
+    #[test]
+    fn test_embed_bytes_gbk_input() {
+        // 模拟 GBK 编码的 JSON：{"name": "测试"} 用 GBK 编码
+        let (encoded, _, _) = encoding_rs::GBK.encode(r#"{"name": "测试"}"#);
+        let out = JsonWatermarker::embed_bytes(&encoded, "hello", DEFAULT_WATERMARK_KEY, "md5", None).unwrap();
+        assert_eq!(&out[..3], b"\xef\xbb\xbf", "GBK 输入应输出 UTF-8 with BOM");
+        let content = std::str::from_utf8(&out[3..]).unwrap();
+        let parsed: Value = serde_json::from_str(content).unwrap();
+        // 中文字段值应被正确保留
+        assert_eq!(parsed["name"], "测试");
+    }
+
+    #[test]
+    fn test_decode_text_bytes_invalid_encoding() {
+        // 非 UTF-8 非 GBK 的随机字节应返回错误
+        let garbage = b"\xff\xfe\x00\x01\x02\x80\x81\x82\x83";
+        let result = decode_text_bytes(garbage);
+        assert!(result.is_err(), "无效编码应返回 Err");
     }
 
     #[test]
