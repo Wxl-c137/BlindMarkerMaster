@@ -298,10 +298,39 @@ impl JsonWatermarker {
 
     /// 从 JSON 字节中提取水印（按字段名）
     ///
-    /// 自动处理 UTF-8 BOM / UTF-8 / GBK 输入。
+    /// 自动处理 UTF-8 BOM / UTF-8 输入。
     pub fn extract_bytes(bytes: &[u8], key: &str) -> Result<String, BlindMarkError> {
         let content = decode_text_bytes(bytes)?;
         Self::extract(&content, key)
+    }
+
+    /// 混淆模式嵌入（字节版本）
+    ///
+    /// 与 embed_bytes 相同，但使用混淆模式（字段名伪装）：
+    /// - 自动剥离输入 UTF-8 BOM
+    /// - 输出始终为 **UTF-8 with BOM**
+    pub fn embed_obfuscated_bytes(
+        bytes: &[u8],
+        watermark_text: &str,
+        mode: &str,
+        aes_key: Option<&str>,
+    ) -> Result<Vec<u8>, BlindMarkError> {
+        let content = decode_text_bytes(bytes)?;
+        let result = Self::embed_obfuscated(&content, watermark_text, mode, aes_key)?;
+        Ok(encode_with_bom(&result))
+    }
+
+    /// 对纯文本字节序列做 UTF-8 BOM 规范化
+    ///
+    /// 适用于 .cslist 等非 JSON 纯文本文件：
+    /// - 剥离输入 BOM（如有）
+    /// - 验证 UTF-8 编码
+    /// - 写回时统一添加 BOM
+    ///
+    /// 不修改文件内容，仅规范化编码。
+    pub fn normalize_bom(bytes: &[u8]) -> Result<Vec<u8>, BlindMarkError> {
+        let content = decode_text_bytes(bytes)?;
+        Ok(encode_with_bom(&content))
     }
 
     /// 混淆模式嵌入：
