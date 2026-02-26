@@ -126,10 +126,10 @@ impl ArchiveProcessor {
 
     /// Get list of supported archive extensions
     ///
-    /// 当前支持 ZIP 和 7z。RAR 因 `unrar` 需要系统库（许可证限制），
+    /// 当前支持 ZIP（含 .var 别名）和 7z。RAR 因 `unrar` 需要系统库（许可证限制），
     /// 暂未实现，传入 .rar 文件会返回错误。
     pub fn supported_extensions() -> Vec<&'static str> {
-        vec!["zip", "7z"]
+        vec!["zip", "var", "7z"]
     }
 }
 
@@ -180,6 +180,7 @@ mod tests {
     fn test_supported_extensions() {
         let extensions = ArchiveProcessor::supported_extensions();
         assert!(extensions.contains(&"zip"));
+        assert!(extensions.contains(&"var"));
         assert!(extensions.contains(&"7z"));
     }
 

@@ -217,6 +217,15 @@ impl ArchiveHandler for ZipHandler {
             if relative.as_os_str().is_empty() {
                 continue;
             }
+            // 过滤 macOS / Windows 系统产生的垃圾文件，不打包进输出归档：
+            //   .DS_Store       — macOS Finder 元数据
+            //   __MACOSX/       — macOS 资源分支目录（AppleDouble）
+            //   ._*             — macOS AppleDouble 资源分叉文件
+            //   Thumbs.db       — Windows 缩略图缓存
+            //   desktop.ini     — Windows 文件夹配置
+            if is_junk_entry(relative) {
+                continue;
+            }
             let name = relative.to_string_lossy().replace('\\', "/");
             if path.is_dir() {
                 dir_names.push(name);
@@ -368,6 +377,23 @@ fn patch_zip_utf8_flag(path: &Path) -> Result<(), BlindMarkError> {
     Ok(())
 }
 
+/// Returns true if the path component is a macOS/Windows junk file that should
+/// be excluded from output archives (.DS_Store, __MACOSX/, ._*, Thumbs.db, desktop.ini).
+fn is_junk_entry(relative: &Path) -> bool {
+    for component in relative.components() {
+        let s = component.as_os_str().to_string_lossy();
+        if s == ".DS_Store"
+            || s == "__MACOSX"
+            || s.starts_with("._")
+            || s.eq_ignore_ascii_case("Thumbs.db")
+            || s.eq_ignore_ascii_case("desktop.ini")
+        {
+            return true;
+        }
+    }
+    false
+}
+
 /// Returns true for formats that are already compressed and won't benefit from Deflate.
 /// Storing them avoids wasting CPU trying to compress incompressible data.
 fn is_already_compressed(name: &str) -> bool {
@@ -408,6 +434,40 @@ mod tests {
         assert!(!handler.supports(Path::new("archive.7z")));
         assert!(!handler.supports(Path::new("archive.rar")));
         assert!(!handler.supports(Path::new("noextension")));
+    }
+
+    /// 验证 create() 会过滤掉 .DS_Store / __MACOSX / ._* / Thumbs.db / desktop.ini
+    #[test]
+    fn test_create_excludes_junk_files() {
+        let temp_source = TempDir::new().unwrap();
+        let temp_dest   = TempDir::new().unwrap();
+        let temp_archive = TempDir::new().unwrap();
+        let src = temp_source.path();
+
+        // 正常文件
+        fs::write(src.join("scene.vaj"), b"{}").unwrap();
+        // macOS 垃圾
+        fs::write(src.join(".DS_Store"), b"junk").unwrap();
+        fs::create_dir_all(src.join("__MACOSX")).unwrap();
+        fs::write(src.join("__MACOSX/._scene.vaj"), b"junk").unwrap();
+        fs::write(src.join("._scene.vaj"), b"junk").unwrap();
+        // Windows 垃圾
+        fs::write(src.join("Thumbs.db"), b"junk").unwrap();
+        fs::write(src.join("desktop.ini"), b"junk").unwrap();
+
+        let handler = ZipHandler::new();
+        let zip_path = temp_archive.path().join("test.zip");
+        handler.create(src, &zip_path).unwrap();
+
+        // 解压后确认垃圾文件不存在
+        handler.extract(&zip_path, temp_dest.path()).unwrap();
+        let dest = temp_dest.path();
+        assert!(dest.join("scene.vaj").exists(), "正常文件应保留");
+        assert!(!dest.join(".DS_Store").exists(), ".DS_Store 应被过滤");
+        assert!(!dest.join("__MACOSX").exists(), "__MACOSX 应被过滤");
+        assert!(!dest.join("._scene.vaj").exists(), "AppleDouble 应被过滤");
+        assert!(!dest.join("Thumbs.db").exists(), "Thumbs.db 应被过滤");
+        assert!(!dest.join("desktop.ini").exists(), "desktop.ini 应被过滤");
     }
 
     #[test]
