@@ -45,8 +45,9 @@ echo "  更新 src-tauri/tauri.conf.json ..."
 sed -i '' "s/\"version\": \"[^\"]*\"/\"version\": \"${VERSION}\"/" src-tauri/tauri.conf.json
 
 echo "  更新 src-tauri/Cargo.toml ..."
-# 只替换第一个 version = "..."（[package] 段），避免误改依赖版本
-perl -i '' -pe 'if (!$done && /^version = /) { s/^version = "[^"]*"/version = "'"${VERSION}"'"/; $done = 1; }' src-tauri/Cargo.toml
+# [package] 段的 version 行格式为 `version = "x.y.z"`（独立一行）
+# 依赖版本格式为 `crate = { version = "..." }`，不会被匹配
+sed -i '' "s/^version = \"[^\"]*\"/version = \"${VERSION}\"/" src-tauri/Cargo.toml
 
 # ── Cargo.lock 同步 ───────────────────────────
 # (如未被 .gitignore 忽略则更新)
@@ -57,6 +58,18 @@ fi
 
 # ── 提交 + 打 tag + 推送 ─────────────────────
 echo "  提交版本变更 ..."
+# 校验三处版本号已对齐
+pkg_ver=$(grep '"version"' package.json | head -1 | sed 's/.*"\([0-9.]*\)".*/\1/')
+tauri_ver=$(grep '"version"' src-tauri/tauri.conf.json | head -1 | sed 's/.*"\([0-9.]*\)".*/\1/')
+cargo_ver=$(grep '^version = ' src-tauri/Cargo.toml | head -1 | sed 's/version = "\([0-9.]*\)".*/\1/')
+if [[ "$pkg_ver" != "$VERSION" || "$tauri_ver" != "$VERSION" || "$cargo_ver" != "$VERSION" ]]; then
+  echo "错误: 版本号未对齐！"
+  echo "  package.json       : $pkg_ver"
+  echo "  tauri.conf.json    : $tauri_ver"
+  echo "  Cargo.toml         : $cargo_ver"
+  echo "  期望               : $VERSION"
+  exit 1
+fi
 git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml
 git commit -m "chore: bump version to ${VERSION}"
 
