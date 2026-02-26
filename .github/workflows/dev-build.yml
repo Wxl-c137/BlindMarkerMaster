@@ -1,9 +1,13 @@
 name: Dev Build
 
-# 每次推送到 dev 分支时触发，构建三平台产物并滚动更新 pre-release "dev-latest"
+# 两种触发场景：
+#   1. push to dev   → 滚动更新 pre-release "dev-latest"
+#   2. push v* tag   → 创建正式版 Release（与 release.yml 相同流程）
 on:
   push:
     branches: [dev]
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 jobs:
@@ -68,9 +72,65 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
-      # 创建或更新滚动 pre-release tag "dev-latest"
+      # 计算 release 元数据：tag push → 正式版；branch push → dev-latest 预览
+      - name: Determine release metadata
+        id: meta
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            echo "is_tag=true"          >> $GITHUB_OUTPUT
+            echo "tag_name=$GITHUB_REF_NAME"                          >> $GITHUB_OUTPUT
+            echo "release_name=BlindMark Master $GITHUB_REF_NAME"     >> $GITHUB_OUTPUT
+            echo "prerelease=false"     >> $GITHUB_OUTPUT
+            {
+              echo 'body<<EOF'
+              echo "## BlindMark Master $GITHUB_REF_NAME"
+              echo ""
+              echo "批量盲水印工具，支持 .zip / .7z / .var / .rar 压缩包。"
+              echo ""
+              echo "### 下载说明"
+              echo "| 文件 | 平台 |"
+              echo "|------|------|"
+              echo "| \`*_aarch64.dmg\` | macOS Apple Silicon（M1/M2/M3） |"
+              echo "| \`*_x64.dmg\` | macOS Intel |"
+              echo "| \`*_x64-setup.exe\` | Windows 64位安装版（推荐） |"
+              echo "| \`*_x64_en-US.msi\` | Windows 64位 MSI |"
+              echo "| \`*_x64_portable.zip\` | Windows 64位便携版（无需安装） |"
+              echo "| \`*_amd64.AppImage\` | Linux AppImage |"
+              echo "| \`*_amd64.deb\` | Linux Debian/Ubuntu |"
+              echo 'EOF'
+            } >> $GITHUB_OUTPUT
+          else
+            echo "is_tag=false"         >> $GITHUB_OUTPUT
+            echo "tag_name=dev-latest"  >> $GITHUB_OUTPUT
+            echo "release_name=BlindMark Master dev-latest" >> $GITHUB_OUTPUT
+            echo "prerelease=true"      >> $GITHUB_OUTPUT
+            {
+              echo 'body<<EOF'
+              echo "## Dev Build（开发预览版）"
+              echo ""
+              echo "> ⚠️ 此版本由 \`dev\` 分支自动构建，功能未经完整测试，仅供开发预览。"
+              echo "> 稳定版请前往 [Releases](../../releases) 下载正式版本。"
+              echo ""
+              echo "**最新提交**：$GITHUB_SHA"
+              echo ""
+              echo "### 下载说明"
+              echo "| 文件 | 平台 |"
+              echo "|------|------|"
+              echo "| \`*_aarch64.dmg\` | macOS Apple Silicon（M1/M2/M3） |"
+              echo "| \`*_x64.dmg\` | macOS Intel |"
+              echo "| \`*_x64-setup.exe\` | Windows 64位安装版（推荐） |"
+              echo "| \`*_x64_en-US.msi\` | Windows 64位 MSI |"
+              echo "| \`*_x64_portable.zip\` | Windows 64位便携版 |"
+              echo "| \`*_amd64.AppImage\` | Linux AppImage |"
+              echo "| \`*_amd64.deb\` | Linux Debian/Ubuntu |"
+              echo 'EOF'
+            } >> $GITHUB_OUTPUT
+          fi
+
+      # 滚动 dev-latest tag：仅 branch push 时更新（tag push 时 tag 已存在）
       - name: Update dev-latest tag
-        if: matrix.platform == 'ubuntu-22.04'
+        if: matrix.platform == 'ubuntu-22.04' && steps.meta.outputs.is_tag == 'false'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -84,28 +144,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: dev-latest
-          releaseName: 'BlindMark Master dev-latest'
-          releaseBody: |
-            ## Dev Build（开发预览版）
-
-            > ⚠️ 此版本由 `dev` 分支自动构建，功能未经完整测试，仅供开发预览。
-            > 稳定版请前往 [Releases](../../releases) 下载正式版本。
-
-            **最新提交**：${{ github.sha }}
-
-            ### 下载说明
-            | 文件 | 平台 |
-            |------|------|
-            | `*_aarch64.dmg` | macOS Apple Silicon（M1/M2/M3） |
-            | `*_x64.dmg` | macOS Intel |
-            | `*_x64-setup.exe` | Windows 64位安装版（推荐） |
-            | `*_x64_en-US.msi` | Windows 64位 MSI |
-            | `*_x64_portable.zip` | Windows 64位便携版 |
-            | `*_amd64.AppImage` | Linux AppImage |
-            | `*_amd64.deb` | Linux Debian/Ubuntu |
+          tagName: ${{ steps.meta.outputs.tag_name }}
+          releaseName: ${{ steps.meta.outputs.release_name }}
+          releaseBody: ${{ steps.meta.outputs.body }}
           releaseDraft: false
-          prerelease: true
+          prerelease: ${{ steps.meta.outputs.prerelease == 'true' }}
           args: ${{ matrix.args }}
 
       # Windows 便携版
@@ -115,11 +158,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          $tagName = "${{ steps.meta.outputs.tag_name }}"
+          $isTag   = "${{ steps.meta.outputs.is_tag }}" -eq "true"
+          $version = $tagName.TrimStart("v")
+          $suffix  = if ($isTag) { "${version}_x64" } else { "dev_x64" }
           $exe = "src-tauri/target/${{ matrix.target }}/release/blindmark-master.exe"
           if (-not (Test-Path $exe)) {
             Write-Error "EXE not found: $exe"
             exit 1
           }
-          $zipName = "BlindMark.Master_dev_x64_portable.zip"
+          $zipName = "BlindMark.Master_${suffix}_portable.zip"
           Compress-Archive -Path $exe -DestinationPath $zipName
-          gh release upload "dev-latest" $zipName --clobber
+          gh release upload $tagName $zipName --clobber
