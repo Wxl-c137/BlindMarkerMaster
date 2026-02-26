@@ -171,6 +171,21 @@ impl FileScanner {
     pub fn scan_vmi_files(&self, root_path: &Path) -> Result<Vec<(PathBuf, PathBuf)>, std::io::Error> {
         self.scan_files_by_extension(root_path, "vmi")
     }
+
+    /// 扫描目录中的所有 VAM 文件（.vam 扩展名，VaM 外观 JSON）
+    pub fn scan_vam_files(&self, root_path: &Path) -> Result<Vec<(PathBuf, PathBuf)>, std::io::Error> {
+        self.scan_files_by_extension(root_path, "vam")
+    }
+
+    /// 扫描目录中的所有 VAP 文件（.vap 扩展名，VaM 动作/姿势 JSON）
+    pub fn scan_vap_files(&self, root_path: &Path) -> Result<Vec<(PathBuf, PathBuf)>, std::io::Error> {
+        self.scan_files_by_extension(root_path, "vap")
+    }
+
+    /// 扫描目录中的所有 CSLIST 文件（.cslist 扩展名，VaM 布料模拟列表，纯文本）
+    pub fn scan_cslist_files(&self, root_path: &Path) -> Result<Vec<(PathBuf, PathBuf)>, std::io::Error> {
+        self.scan_files_by_extension(root_path, "cslist")
+    }
 }
 
 impl Default for FileScanner {

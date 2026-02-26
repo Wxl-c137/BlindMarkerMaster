@@ -1,0 +1,172 @@
+name: Dev Build
+
+# 两种触发场景：
+#   1. push to dev   → 滚动更新 pre-release "dev-latest"
+#   2. push v* tag   → 创建正式版 Release（与 release.yml 相同流程）
+on:
+  push:
+    branches: [dev]
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    permissions:
+      contents: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: --target aarch64-apple-darwin
+            target: aarch64-apple-darwin
+            label: macOS-Apple-Silicon
+          - platform: macos-latest
+            args: --target x86_64-apple-darwin
+            target: x86_64-apple-darwin
+            label: macOS-Intel
+          - platform: windows-latest
+            args: --target x86_64-pc-windows-msvc
+            target: x86_64-pc-windows-msvc
+            label: Windows-x64
+          - platform: ubuntu-22.04
+            args: --target x86_64-unknown-linux-gnu
+            target: x86_64-unknown-linux-gnu
+            label: Linux-x64
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+          key: dev-${{ matrix.target }}
+
+      - name: Install Linux system dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      # 计算 release 元数据：tag push → 正式版；branch push → dev-latest 预览
+      - name: Determine release metadata
+        id: meta
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            echo "is_tag=true"          >> $GITHUB_OUTPUT
+            echo "tag_name=$GITHUB_REF_NAME"                          >> $GITHUB_OUTPUT
+            echo "release_name=BlindMark Master $GITHUB_REF_NAME"     >> $GITHUB_OUTPUT
+            echo "prerelease=false"     >> $GITHUB_OUTPUT
+            {
+              echo 'body<<EOF'
+              echo "## BlindMark Master $GITHUB_REF_NAME"
+              echo ""
+              echo "批量盲水印工具，支持 .zip / .7z / .var / .rar 压缩包。"
+              echo ""
+              echo "### 下载说明"
+              echo "| 文件 | 平台 |"
+              echo "|------|------|"
+              echo "| \`*_aarch64.dmg\` | macOS Apple Silicon（M1/M2/M3） |"
+              echo "| \`*_x64.dmg\` | macOS Intel |"
+              echo "| \`*_x64-setup.exe\` | Windows 64位安装版（推荐） |"
+              echo "| \`*_x64_en-US.msi\` | Windows 64位 MSI |"
+              echo "| \`*_x64_portable.zip\` | Windows 64位便携版（无需安装） |"
+              echo "| \`*_amd64.AppImage\` | Linux AppImage |"
+              echo "| \`*_amd64.deb\` | Linux Debian/Ubuntu |"
+              echo 'EOF'
+            } >> $GITHUB_OUTPUT
+          else
+            echo "is_tag=false"         >> $GITHUB_OUTPUT
+            echo "tag_name=dev-latest"  >> $GITHUB_OUTPUT
+            echo "release_name=BlindMark Master dev-latest" >> $GITHUB_OUTPUT
+            echo "prerelease=true"      >> $GITHUB_OUTPUT
+            {
+              echo 'body<<EOF'
+              echo "## Dev Build（开发预览版）"
+              echo ""
+              echo "> ⚠️ 此版本由 \`dev\` 分支自动构建，功能未经完整测试，仅供开发预览。"
+              echo "> 稳定版请前往 [Releases](../../releases) 下载正式版本。"
+              echo ""
+              echo "**最新提交**：$GITHUB_SHA"
+              echo ""
+              echo "### 下载说明"
+              echo "| 文件 | 平台 |"
+              echo "|------|------|"
+              echo "| \`*_aarch64.dmg\` | macOS Apple Silicon（M1/M2/M3） |"
+              echo "| \`*_x64.dmg\` | macOS Intel |"
+              echo "| \`*_x64-setup.exe\` | Windows 64位安装版（推荐） |"
+              echo "| \`*_x64_en-US.msi\` | Windows 64位 MSI |"
+              echo "| \`*_x64_portable.zip\` | Windows 64位便携版 |"
+              echo "| \`*_amd64.AppImage\` | Linux AppImage |"
+              echo "| \`*_amd64.deb\` | Linux Debian/Ubuntu |"
+              echo 'EOF'
+            } >> $GITHUB_OUTPUT
+          fi
+
+      # 滚动 dev-latest tag：仅 branch push 时更新（tag push 时 tag 已存在）
+      - name: Update dev-latest tag
+        if: matrix.platform == 'ubuntu-22.04' && steps.meta.outputs.is_tag == 'false'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -f dev-latest
+          git push origin dev-latest --force
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ steps.meta.outputs.tag_name }}
+          releaseName: ${{ steps.meta.outputs.release_name }}
+          releaseBody: ${{ steps.meta.outputs.body }}
+          releaseDraft: false
+          prerelease: ${{ steps.meta.outputs.prerelease == 'true' }}
+          args: ${{ matrix.args }}
+
+      # Windows 便携版
+      - name: Package Windows portable zip
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tagName = "${{ steps.meta.outputs.tag_name }}"
+          $isTag   = "${{ steps.meta.outputs.is_tag }}" -eq "true"
+          $version = $tagName.TrimStart("v")
+          $suffix  = if ($isTag) { "${version}_x64" } else { "dev_x64" }
+          $exe = "src-tauri/target/${{ matrix.target }}/release/blindmark-master.exe"
+          if (-not (Test-Path $exe)) {
+            Write-Error "EXE not found: $exe"
+            exit 1
+          }
+          $zipName = "BlindMark.Master_${suffix}_portable.zip"
+          Compress-Archive -Path $exe -DestinationPath $zipName
+          gh release upload $tagName $zipName --clobber
