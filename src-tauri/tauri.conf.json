@@ -1,6 +1,6 @@
 {
   "productName": "BlindMark Master",
-  "version": "0.2.10",
+  "version": "0.2.11",
   "identifier": "com.blindmark.master",
   "build": {
     "beforeDevCommand": "npm run dev",
