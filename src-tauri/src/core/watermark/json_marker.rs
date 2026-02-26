@@ -5,7 +5,7 @@ use aes_gcm::{
     Aes256Gcm, Key, Nonce,
 };
 use sha2::{Sha256, Digest};
-use encoding_rs::GBK;
+use encoding_rs as _; // encoding_rs 保留供其他模块使用
 use crate::models::BlindMarkError;
 use crate::core::watermark::encoder::WatermarkEncoder;
 
@@ -24,25 +24,18 @@ pub const DEFAULT_WATERMARK_KEY: &str = "_watermark";
 
 // ─── 私有工具函数 ──────────────────────────────────────────────────────────────
 
-/// 将字节序列智能解码为 UTF-8 字符串。
+/// 将字节序列解码为 UTF-8 字符串。
 ///
 /// 处理顺序：
 ///   1. 剥离 UTF-8 BOM（如有），避免 serde_json 解析失败
-///   2. 尝试 UTF-8（无损）
-///   3. 尝试 GBK / GB2312（Windows 中文环境保存的 JSON 常见编码）
-///   4. 两者均失败则返回错误
+///   2. 按 UTF-8 解码，失败则返回错误
 fn decode_text_bytes(bytes: &[u8]) -> Result<String, BlindMarkError> {
     let bytes = bytes.strip_prefix(UTF8_BOM).unwrap_or(bytes);
-    if let Ok(s) = std::str::from_utf8(bytes) {
-        return Ok(s.to_owned());
-    }
-    let (cow, _enc, had_errors) = GBK.decode(bytes);
-    if !had_errors {
-        return Ok(cow.into_owned());
-    }
-    Err(BlindMarkError::ImageProcessing(
-        "文件不是有效的 UTF-8 或 GBK 编码".to_string(),
-    ))
+    std::str::from_utf8(bytes)
+        .map(|s| s.to_owned())
+        .map_err(|e| BlindMarkError::ImageProcessing(
+            format!("文件不是有效的 UTF-8 编码: {}", e)
+        ))
 }
 
 /// 将字符串编码为 UTF-8 with BOM 的字节序列。
@@ -529,23 +522,19 @@ mod tests {
     }
 
     #[test]
-    fn test_embed_bytes_gbk_input() {
-        // 模拟 GBK 编码的 JSON：{"name": "测试"} 用 GBK 编码
+    fn test_embed_bytes_gbk_input_fails() {
+        // GBK 编码的字节不是合法 UTF-8，应返回错误
         let (encoded, _, _) = encoding_rs::GBK.encode(r#"{"name": "测试"}"#);
-        let out = JsonWatermarker::embed_bytes(&encoded, "hello", DEFAULT_WATERMARK_KEY, "md5", None).unwrap();
-        assert_eq!(&out[..3], b"\xef\xbb\xbf", "GBK 输入应输出 UTF-8 with BOM");
-        let content = std::str::from_utf8(&out[3..]).unwrap();
-        let parsed: Value = serde_json::from_str(content).unwrap();
-        // 中文字段值应被正确保留
-        assert_eq!(parsed["name"], "测试");
+        let result = JsonWatermarker::embed_bytes(&encoded, "hello", DEFAULT_WATERMARK_KEY, "md5", None);
+        assert!(result.is_err(), "GBK 输入应返回 UTF-8 解码错误");
     }
 
     #[test]
     fn test_decode_text_bytes_invalid_encoding() {
-        // 非 UTF-8 非 GBK 的随机字节应返回错误
-        let garbage = b"\xff\xfe\x00\x01\x02\x80\x81\x82\x83";
+        // 非 UTF-8 字节应返回错误
+        let garbage = b"\xff\xfe\x80\x81\x82\x83";
         let result = decode_text_bytes(garbage);
-        assert!(result.is_err(), "无效编码应返回 Err");
+        assert!(result.is_err(), "无效 UTF-8 应返回 Err");
     }
 
     #[test]
