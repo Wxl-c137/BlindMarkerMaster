@@ -74,12 +74,11 @@ fn sanitize_zip_path(name: &str) -> Option<PathBuf> {
 /// 校验 payload 里的 CRC32 与实际写入的文件名字节是否一致，对目录条目
 /// 等特殊情况容易产生不匹配而报错。
 fn file_opts(method: CompressionMethod, level: Option<i64>, _name: &str) -> Result<FullFileOptions<'static>, BlindMarkError> {
-    // EFS 标志由 zip 库自动处理，此处不再手动添加 0x7075 字段
+    // EFS 标志由 zip 库自动处理，此处不再手动添加 0x7075 字段。
+    // 不写入 Unix 权限位（unix_permissions）：
+    //   - .var 是跨平台包，接收方（Windows / VaM）不需要 Unix 属性
+    //   - 写入权限位会导致部分 Windows 工具将文件标记为只读或产生警告
     let mut opts = FullFileOptions::default().compression_method(method);
-    #[cfg(unix)]
-    {
-        opts = opts.unix_permissions(0o755);
-    }
     if let Some(lvl) = level {
         opts = opts.compression_level(Some(lvl));
     }
