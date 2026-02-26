@@ -53,6 +53,10 @@ echo "  更新 src/App.tsx ..."
 # 落地页显示版本号，格式为 >v0.0.0<
 sed -i '' "s/>v[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*</>v${VERSION}</" src/App.tsx
 
+echo "  更新 docs/index.html ..."
+# 文档页版本号，格式为 v0.0.0（无尖括号，直接替换所有出现位置）
+sed -i '' "s/v[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*/v${VERSION}/g" docs/index.html
+
 # ── Cargo.lock 同步 ───────────────────────────
 # (如未被 .gitignore 忽略则更新)
 if [[ -f "src-tauri/Cargo.lock" ]] && ! git check-ignore -q src-tauri/Cargo.lock; then
@@ -67,16 +71,18 @@ pkg_ver=$(grep '"version"' package.json | head -1 | sed 's/.*"\([0-9.]*\)".*/\1/
 tauri_ver=$(grep '"version"' src-tauri/tauri.conf.json | head -1 | sed 's/.*"\([0-9.]*\)".*/\1/')
 cargo_ver=$(grep '^version = ' src-tauri/Cargo.toml | head -1 | sed 's/version = "\([0-9.]*\)".*/\1/')
 app_ver=$(grep -o '>v[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*<' src/App.tsx | head -1 | sed 's/>v\(.*\)</\1/')
-if [[ "$pkg_ver" != "$VERSION" || "$tauri_ver" != "$VERSION" || "$cargo_ver" != "$VERSION" || "$app_ver" != "$VERSION" ]]; then
+docs_ver=$(grep -o 'v[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*' docs/index.html | head -1 | sed 's/v//')
+if [[ "$pkg_ver" != "$VERSION" || "$tauri_ver" != "$VERSION" || "$cargo_ver" != "$VERSION" || "$app_ver" != "$VERSION" || "$docs_ver" != "$VERSION" ]]; then
   echo "错误: 版本号未对齐！"
   echo "  package.json       : $pkg_ver"
   echo "  tauri.conf.json    : $tauri_ver"
   echo "  Cargo.toml         : $cargo_ver"
   echo "  src/App.tsx        : $app_ver"
+  echo "  docs/index.html    : $docs_ver"
   echo "  期望               : $VERSION"
   exit 1
 fi
-git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src/App.tsx
+git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src/App.tsx docs/index.html
 git commit -m "chore: bump version to ${VERSION}"
 
 echo "  创建 tag $TAG ..."
