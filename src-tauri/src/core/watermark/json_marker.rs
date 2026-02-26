@@ -5,7 +5,6 @@ use aes_gcm::{
     Aes256Gcm, Key, Nonce,
 };
 use sha2::{Sha256, Digest};
-use encoding_rs as _; // encoding_rs 保留供其他模块使用
 use crate::models::BlindMarkError;
 use crate::core::watermark::encoder::WatermarkEncoder;
 
@@ -272,18 +271,11 @@ impl JsonWatermarker {
             })
     }
 
-    /// 检查 JSON 内容是否已包含指定水印字段
-    pub fn has_watermark(content: &str, key: &str) -> bool {
-        serde_json::from_str::<Value>(content)
-            .ok()
-            .and_then(|v| v.get(key).cloned())
-            .is_some()
-    }
-
     /// 嵌入水印到 JSON 字节
     ///
-    /// - 自动检测编码（UTF-8 BOM / UTF-8 / GBK），解码后嵌入水印
-    /// - 输出始终为 **UTF-8 with BOM**，确保 Windows 工具正确识别编码
+    /// - 自动处理 UTF-8 BOM / UTF-8 输入（剥离输入 BOM）
+    /// - 输出为 **UTF-8 without BOM**，符合 JSON RFC 8259 规范，
+    ///   避免下游 JSON 解析器（VaM 引擎等）因 BOM 导致解析失败
     pub fn embed_bytes(
         bytes: &[u8],
         watermark_text: &str,
@@ -293,7 +285,7 @@ impl JsonWatermarker {
     ) -> Result<Vec<u8>, BlindMarkError> {
         let content = decode_text_bytes(bytes)?;
         let result = Self::embed(&content, watermark_text, key, mode, aes_key)?;
-        Ok(encode_with_bom(&result))
+        Ok(result.into_bytes())
     }
 
     /// 从 JSON 字节中提取水印（按字段名）
@@ -308,7 +300,7 @@ impl JsonWatermarker {
     ///
     /// 与 embed_bytes 相同，但使用混淆模式（字段名伪装）：
     /// - 自动剥离输入 UTF-8 BOM
-    /// - 输出始终为 **UTF-8 with BOM**
+    /// - 输出为 **UTF-8 without BOM**，符合 JSON RFC 8259 规范
     pub fn embed_obfuscated_bytes(
         bytes: &[u8],
         watermark_text: &str,
@@ -317,7 +309,7 @@ impl JsonWatermarker {
     ) -> Result<Vec<u8>, BlindMarkError> {
         let content = decode_text_bytes(bytes)?;
         let result = Self::embed_obfuscated(&content, watermark_text, mode, aes_key)?;
-        Ok(encode_with_bom(&result))
+        Ok(result.into_bytes())
     }
 
     /// 对纯文本字节序列做 UTF-8 BOM 规范化
@@ -517,34 +509,33 @@ mod tests {
     }
 
     #[test]
-    fn test_embed_bytes_output_has_bom() {
+    fn test_embed_bytes_output_no_bom() {
         let json = br#"{"name": "test"}"#;
         let out = JsonWatermarker::embed_bytes(json, "hello", DEFAULT_WATERMARK_KEY, "md5", None).unwrap();
-        assert_eq!(&out[..3], b"\xef\xbb\xbf", "输出应以 UTF-8 BOM 开头");
-        // BOM 之后应是合法 JSON
-        let content = std::str::from_utf8(&out[3..]).unwrap();
-        let parsed: Value = serde_json::from_str(content).unwrap();
+        assert_ne!(&out[..3], b"\xef\xbb\xbf", "JSON 输出不应包含 BOM（违反 RFC 8259）");
+        // 输出应是合法 JSON
+        let parsed: Value = serde_json::from_slice(&out).unwrap();
         assert!(parsed.get(DEFAULT_WATERMARK_KEY).is_some());
     }
 
     #[test]
     fn test_embed_bytes_strips_input_bom() {
-        // 输入带 BOM 的 UTF-8
+        // 输入带 BOM 的 UTF-8，输出应剥离 BOM，符合 JSON 规范
         let mut input = b"\xef\xbb\xbf".to_vec();
         input.extend_from_slice(br#"{"name": "bom_test"}"#);
         let out = JsonWatermarker::embed_bytes(&input, "hello", DEFAULT_WATERMARK_KEY, "md5", None).unwrap();
-        assert_eq!(&out[..3], b"\xef\xbb\xbf");
-        // 水印正确写入
-        let content = std::str::from_utf8(&out[3..]).unwrap();
-        let parsed: Value = serde_json::from_str(content).unwrap();
+        assert_ne!(&out[..3], b"\xef\xbb\xbf", "输入有 BOM 时，输出仍不应有 BOM");
+        // 水印正确写入，可直接解析为 JSON
+        let parsed: Value = serde_json::from_slice(&out).unwrap();
         assert_eq!(parsed["name"], "bom_test");
     }
 
     #[test]
-    fn test_extract_bytes_with_bom() {
-        // 先 embed（输出带 BOM），再 extract 应能正常取回水印
+    fn test_extract_bytes_without_bom() {
+        // embed_bytes 输出无 BOM，extract_bytes 仍能正常取回水印
         let json = br#"{"x": 1}"#;
         let watermarked = JsonWatermarker::embed_bytes(json, "李四", DEFAULT_WATERMARK_KEY, "md5", None).unwrap();
+        assert_ne!(&watermarked[..3], b"\xef\xbb\xbf", "embed_bytes 输出不应含 BOM");
         let extracted = JsonWatermarker::extract_bytes(&watermarked, DEFAULT_WATERMARK_KEY).unwrap();
         let expected = WatermarkEncoder::encode("李四").md5_hash;
         assert_eq!(extracted, expected);

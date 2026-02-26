@@ -145,7 +145,7 @@ function App() {
     progressFilename: '',
     scan: null,
     detail: null,
-    typeCounters: { json: 0, vaj: 0, vmi: 0, image: 0 },
+    typeCounters: { json: 0, vaj: 0, vmi: 0, image: 0, vam: 0, vap: 0, cslist: 0 },
     outputPath: null,
     error: null,
     imageList: [],

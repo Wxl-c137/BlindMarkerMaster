@@ -260,119 +260,27 @@ pub async fn process_archive(
                 .map_err(|e| format!("图片处理失败: {}", e))?;
         }
 
-        // --- 处理 JSON ---
-        let json_total = json_files.len();
-        for (file_idx, (abs_path, rel_path)) in json_files.iter().enumerate() {
-            let fname = rel_path.file_name().and_then(|n| n.to_str()).unwrap_or("?");
-            progress
-                .emit_detail_progress(idx + 1, total_watermarks, "json", file_idx + 1, json_total, fname)
-                .map_err(|e| format!("Progress error: {}", e))?;
-            let bytes = std::fs::read(abs_path)
-                .map_err(|e| format!("读取 JSON 失败 {}: {}", rel_path.display(), e))?;
-            let watermarked = if obfuscate {
-                JsonWatermarker::embed_obfuscated_bytes(&bytes, watermark_text, &watermark_mode, aes_key.as_deref())
-            } else {
-                JsonWatermarker::embed_bytes(&bytes, watermark_text, &wm_key, &watermark_mode, aes_key.as_deref())
-            }.map_err(|e| format!("JSON 水印注入失败 {}: {}", rel_path.display(), e))?;
-            let dest = processed_path.join(rel_path);
-            if let Some(parent) = dest.parent() {
-                std::fs::create_dir_all(parent)
-                    .map_err(|e| format!("创建目录失败: {}", e))?;
-            }
-            std::fs::write(&dest, &watermarked)
-                .map_err(|e| format!("写入 JSON 失败 {}: {}", rel_path.display(), e))?;
-        }
-
-        // --- 处理 VAJ ---
-        let vaj_total = vaj_files.len();
-        for (file_idx, (abs_path, rel_path)) in vaj_files.iter().enumerate() {
-            let fname = rel_path.file_name().and_then(|n| n.to_str()).unwrap_or("?");
-            progress
-                .emit_detail_progress(idx + 1, total_watermarks, "vaj", file_idx + 1, vaj_total, fname)
-                .map_err(|e| format!("Progress error: {}", e))?;
-            let bytes = std::fs::read(abs_path)
-                .map_err(|e| format!("读取 VAJ 失败 {}: {}", rel_path.display(), e))?;
-            let watermarked = if obfuscate {
-                JsonWatermarker::embed_obfuscated_bytes(&bytes, watermark_text, &watermark_mode, aes_key.as_deref())
-            } else {
-                JsonWatermarker::embed_bytes(&bytes, watermark_text, &wm_key, &watermark_mode, aes_key.as_deref())
-            }.map_err(|e| format!("VAJ 水印注入失败 {}: {}", rel_path.display(), e))?;
-            let dest = processed_path.join(rel_path);
-            if let Some(parent) = dest.parent() {
-                std::fs::create_dir_all(parent)
-                    .map_err(|e| format!("创建目录失败: {}", e))?;
-            }
-            std::fs::write(&dest, &watermarked)
-                .map_err(|e| format!("写入 VAJ 失败 {}: {}", rel_path.display(), e))?;
-        }
-
-        // --- 处理 VMI ---
-        let vmi_total = vmi_files.len();
-        for (file_idx, (abs_path, rel_path)) in vmi_files.iter().enumerate() {
-            let fname = rel_path.file_name().and_then(|n| n.to_str()).unwrap_or("?");
-            progress
-                .emit_detail_progress(idx + 1, total_watermarks, "vmi", file_idx + 1, vmi_total, fname)
-                .map_err(|e| format!("Progress error: {}", e))?;
-            let bytes = std::fs::read(abs_path)
-                .map_err(|e| format!("读取 VMI 失败 {}: {}", rel_path.display(), e))?;
-            let watermarked = if obfuscate {
-                JsonWatermarker::embed_obfuscated_bytes(&bytes, watermark_text, &watermark_mode, aes_key.as_deref())
-            } else {
-                JsonWatermarker::embed_bytes(&bytes, watermark_text, &wm_key, &watermark_mode, aes_key.as_deref())
-            }.map_err(|e| format!("VMI 水印注入失败 {}: {}", rel_path.display(), e))?;
-            let dest = processed_path.join(rel_path);
-            if let Some(parent) = dest.parent() {
-                std::fs::create_dir_all(parent)
-                    .map_err(|e| format!("创建目录失败: {}", e))?;
-            }
-            std::fs::write(&dest, &watermarked)
-                .map_err(|e| format!("写入 VMI 失败 {}: {}", rel_path.display(), e))?;
-        }
-
-        // --- 处理 VAM（JSON 格式，同 VAJ/VMI）---
-        let vam_total = vam_files.len();
-        for (file_idx, (abs_path, rel_path)) in vam_files.iter().enumerate() {
-            let fname = rel_path.file_name().and_then(|n| n.to_str()).unwrap_or("?");
-            progress
-                .emit_detail_progress(idx + 1, total_watermarks, "vam", file_idx + 1, vam_total, fname)
-                .map_err(|e| format!("Progress error: {}", e))?;
-            let bytes = std::fs::read(abs_path)
-                .map_err(|e| format!("读取 VAM 失败 {}: {}", rel_path.display(), e))?;
-            let watermarked = if obfuscate {
-                JsonWatermarker::embed_obfuscated_bytes(&bytes, watermark_text, &watermark_mode, aes_key.as_deref())
-            } else {
-                JsonWatermarker::embed_bytes(&bytes, watermark_text, &wm_key, &watermark_mode, aes_key.as_deref())
-            }.map_err(|e| format!("VAM 水印注入失败 {}: {}", rel_path.display(), e))?;
-            let dest = processed_path.join(rel_path);
-            if let Some(parent) = dest.parent() {
-                std::fs::create_dir_all(parent)
-                    .map_err(|e| format!("创建目录失败: {}", e))?;
-            }
-            std::fs::write(&dest, &watermarked)
-                .map_err(|e| format!("写入 VAM 失败 {}: {}", rel_path.display(), e))?;
-        }
-
-        // --- 处理 VAP（JSON 格式，同 VAJ/VMI）---
-        let vap_total = vap_files.len();
-        for (file_idx, (abs_path, rel_path)) in vap_files.iter().enumerate() {
-            let fname = rel_path.file_name().and_then(|n| n.to_str()).unwrap_or("?");
-            progress
-                .emit_detail_progress(idx + 1, total_watermarks, "vap", file_idx + 1, vap_total, fname)
-                .map_err(|e| format!("Progress error: {}", e))?;
-            let bytes = std::fs::read(abs_path)
-                .map_err(|e| format!("读取 VAP 失败 {}: {}", rel_path.display(), e))?;
-            let watermarked = if obfuscate {
-                JsonWatermarker::embed_obfuscated_bytes(&bytes, watermark_text, &watermark_mode, aes_key.as_deref())
-            } else {
-                JsonWatermarker::embed_bytes(&bytes, watermark_text, &wm_key, &watermark_mode, aes_key.as_deref())
-            }.map_err(|e| format!("VAP 水印注入失败 {}: {}", rel_path.display(), e))?;
-            let dest = processed_path.join(rel_path);
-            if let Some(parent) = dest.parent() {
-                std::fs::create_dir_all(parent)
-                    .map_err(|e| format!("创建目录失败: {}", e))?;
-            }
-            std::fs::write(&dest, &watermarked)
-                .map_err(|e| format!("写入 VAP 失败 {}: {}", rel_path.display(), e))?;
+        // --- 处理 JSON / VAJ / VMI / VAM / VAP（逻辑完全一致，统一处理）---
+        for (files, file_type) in [
+            (json_files.as_slice(), "json"),
+            (vaj_files.as_slice(), "vaj"),
+            (vmi_files.as_slice(), "vmi"),
+            (vam_files.as_slice(), "vam"),
+            (vap_files.as_slice(), "vap"),
+        ] {
+            process_json_type_files(
+                files,
+                file_type,
+                idx + 1,
+                total_watermarks,
+                watermark_text,
+                &wm_key,
+                &watermark_mode,
+                aes_key.as_deref(),
+                obfuscate,
+                processed_path,
+                &progress,
+            )?;
         }
 
         // --- 处理 CSLIST（纯文本，仅做 UTF-8 BOM 规范化，不注入水印）---
@@ -450,6 +358,49 @@ pub async fn process_archive(
         .map_err(|e| format!("Progress error: {}", e))?;
 
     Ok(result)
+}
+
+/// 批量处理一类 JSON 格式文件，注入水印并写入 processed 目录
+///
+/// JSON / VAJ / VMI / VAM / VAP 的处理逻辑完全一致，仅文件类型标签不同，
+/// 因此统一由本函数处理，通过 `file_type` 区分（用于进度上报和错误信息）。
+fn process_json_type_files(
+    files: &[(std::path::PathBuf, std::path::PathBuf)],
+    file_type: &str,
+    batch_current: usize,
+    batch_total: usize,
+    watermark_text: &str,
+    wm_key: &str,
+    watermark_mode: &str,
+    aes_key: Option<&str>,
+    obfuscate: bool,
+    processed_path: &Path,
+    progress: &ProgressEmitter,
+) -> Result<(), String> {
+    let type_label = file_type.to_uppercase();
+    let type_total = files.len();
+    for (file_idx, (abs_path, rel_path)) in files.iter().enumerate() {
+        let fname = rel_path.file_name().and_then(|n| n.to_str()).unwrap_or("?");
+        progress
+            .emit_detail_progress(batch_current, batch_total, file_type, file_idx + 1, type_total, fname)
+            .map_err(|e| format!("Progress error: {}", e))?;
+        let bytes = std::fs::read(abs_path)
+            .map_err(|e| format!("读取 {} 失败 {}: {}", type_label, rel_path.display(), e))?;
+        let watermarked = if obfuscate {
+            JsonWatermarker::embed_obfuscated_bytes(&bytes, watermark_text, watermark_mode, aes_key)
+        } else {
+            JsonWatermarker::embed_bytes(&bytes, watermark_text, wm_key, watermark_mode, aes_key)
+        }
+        .map_err(|e| format!("{} 水印注入失败 {}: {}", type_label, rel_path.display(), e))?;
+        let dest = processed_path.join(rel_path);
+        if let Some(parent) = dest.parent() {
+            std::fs::create_dir_all(parent)
+                .map_err(|e| format!("创建目录失败: {}", e))?;
+        }
+        std::fs::write(&dest, &watermarked)
+            .map_err(|e| format!("写入 {} 失败 {}: {}", type_label, rel_path.display(), e))?;
+    }
+    Ok(())
 }
 
 /// 将水印文本转换为合法的文件夹名（替换操作系统禁止的字符）
@@ -582,11 +533,8 @@ pub async fn scan_watermarks_in_archive(
         .extract(&archive_path_buf, workspace.extracted_path())
         .map_err(|e| format!("解压失败: {}", e))?;
 
-    let key = watermark_key
-        .as_deref()
-        .filter(|k| !k.trim().is_empty())
-        .unwrap_or(DEFAULT_WATERMARK_KEY);
-    let _ = key; // 保留参数兼容性；提取现通过值扫描实现，无需指定键名
+    // watermark_key 参数保留供 API 兼容；提取现通过值扫描实现，无需指定键名
+    let _ = watermark_key;
 
     let scanner = FileScanner::new();
     let extracted = workspace.extracted_path();
