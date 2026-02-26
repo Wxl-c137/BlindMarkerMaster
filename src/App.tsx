@@ -22,7 +22,6 @@ interface ScanSummary {
   imageCount: number;
   vamCount: number;
   vapCount: number;
-  cslistCount: number;
 }
 
 interface DetailProgress {
@@ -42,7 +41,6 @@ interface TypeCounters {
   image: number;
   vam: number;
   vap: number;
-  cslist: number;
 }
 
 interface EmbedState {
@@ -56,7 +54,6 @@ interface EmbedState {
   processVmi: boolean;
   processVam: boolean;
   processVap: boolean;
-  processCslist: boolean;
   watermarkKey: string;
   processObfuscation: boolean;
   watermarkMode: 'md5' | 'plaintext' | 'aes';
@@ -130,7 +127,6 @@ function App() {
     processVmi: true,
     processVam: true,
     processVap: true,
-    processCslist: true,
     watermarkKey: '',
     processObfuscation: false,
     watermarkMode: 'md5',
@@ -145,7 +141,7 @@ function App() {
     progressFilename: '',
     scan: null,
     detail: null,
-    typeCounters: { json: 0, vaj: 0, vmi: 0, image: 0 },
+    typeCounters: { json: 0, vaj: 0, vmi: 0, image: 0, vam: 0, vap: 0 },
     outputPath: null,
     error: null,
     imageList: [],
@@ -208,7 +204,7 @@ function App() {
         setEmbed((prev) => ({
           ...prev,
           scan: event.payload,
-          typeCounters: { json: 0, vaj: 0, vmi: 0, image: 0, vam: 0, vap: 0, cslist: 0 },
+          typeCounters: { json: 0, vaj: 0, vmi: 0, image: 0, vam: 0, vap: 0 },
         }));
       });
 
@@ -321,10 +317,10 @@ function App() {
   }, []);
 
   const handleProcess = useCallback(async () => {
-    const { archivePath, sourceType, singleText, excelPath, processImages, processJson, processVaj, processVmi, processVam, processVap, processCslist, watermarkKey, outputDir, processObfuscation, watermarkMode, aesKey, selectedImages, fastMode } = embed;
+    const { archivePath, sourceType, singleText, excelPath, processImages, processJson, processVaj, processVmi, processVam, processVap, watermarkKey, outputDir, processObfuscation, watermarkMode, aesKey, selectedImages, fastMode } = embed;
 
     if (!archivePath) { setEmbed((prev) => ({ ...prev, error: '请先选择压缩包' })); return; }
-    if (!processImages && !processJson && !processVaj && !processVmi && !processVam && !processVap && !processCslist) {
+    if (!processImages && !processJson && !processVaj && !processVmi && !processVam && !processVap) {
       setEmbed((prev) => ({ ...prev, error: '请至少选择一种水印类型' })); return;
     }
     if (sourceType === 'singleText' && !singleText.trim()) {
@@ -359,13 +355,13 @@ function App() {
       progressTotal: 0,
       scan: null,
       detail: null,
-      typeCounters: { json: 0, vaj: 0, vmi: 0, image: 0, vam: 0, vap: 0, cslist: 0 },
+      typeCounters: { json: 0, vaj: 0, vmi: 0, image: 0, vam: 0, vap: 0 },
     }));
 
     try {
       const outputPath = await invoke<string>('process_archive', {
         archivePath, config, processImages, processJson, processVaj, processVmi,
-        processVam, processVap, processCslist,
+        processVam, processVap,
         outputDir: outputDir ?? null,
         obfuscate: processObfuscation,
         watermarkMode,
@@ -504,7 +500,7 @@ function App() {
               <span style={{ color: t.text }}>MARK </span>
               <span style={{ color: '#ff0080', textShadow: '0 0 10px rgba(255,0,128,0.8), 0 0 20px rgba(255,0,128,0.4)' }}>MASTER</span>
             </h1>
-            <p className="text-xs mb-1" style={{ color: t.textFaint, letterSpacing: '0.06em' }}>by lulu · <span style={{ opacity: 0.6 }}>v0.2.9</span></p>
+            <p className="text-xs mb-1" style={{ color: t.textFaint, letterSpacing: '0.06em' }}>by lulu · <span style={{ opacity: 0.6 }}>v0.2.10</span></p>
             <div className="flex items-center gap-3 mt-0.5">
               <p className="text-sm" style={{ color: t.textMuted }}>
                 JSON / VAJ / VMI · 图片盲水印 · 支持 .zip .7z .var .rar
@@ -700,7 +696,6 @@ function App() {
                     { key: 'processVmi',    label: 'VMI' },
                     { key: 'processVam',    label: 'VAM' },
                     { key: 'processVap',    label: 'VAP' },
-                    { key: 'processCslist', label: 'CSLIST' },
                     { key: 'processImages', label: '图片*' },
                   ] as { key: keyof EmbedState; label: string }[]).map(({ key, label }) => {
                     const checked = embed[key] as boolean;
@@ -973,7 +968,6 @@ function App() {
                         { key: 'vmi'    as keyof TypeCounters, label: 'VMI',    total: embed.scan.vmiCount,    show: embed.processVmi },
                         { key: 'vam'    as keyof TypeCounters, label: 'VAM',    total: embed.scan.vamCount,    show: embed.processVam },
                         { key: 'vap'    as keyof TypeCounters, label: 'VAP',    total: embed.scan.vapCount,    show: embed.processVap },
-                        { key: 'cslist' as keyof TypeCounters, label: 'CSLIST', total: embed.scan.cslistCount, show: embed.processCslist },
                         { key: 'image'  as keyof TypeCounters, label: '图片',   total: embed.scan.imageCount,  show: embed.processImages },
                       ])
                         .filter(({ show, total }) => show && total > 0)

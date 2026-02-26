@@ -5,7 +5,6 @@ use aes_gcm::{
     Aes256Gcm, Key, Nonce,
 };
 use sha2::{Sha256, Digest};
-use encoding_rs as _; // encoding_rs 保留供其他模块使用
 use crate::models::BlindMarkError;
 use crate::core::watermark::encoder::WatermarkEncoder;
 
@@ -28,14 +27,23 @@ pub const DEFAULT_WATERMARK_KEY: &str = "_watermark";
 ///
 /// 处理顺序：
 ///   1. 剥离 UTF-8 BOM（如有），避免 serde_json 解析失败
-///   2. 按 UTF-8 解码，失败则返回错误
+///   2. 尝试按 UTF-8 解码
+///   3. UTF-8 失败时回退到 GBK 解码（兼容中文 Windows 系统生成的文件）
+///   4. 两者均失败则返回错误
 fn decode_text_bytes(bytes: &[u8]) -> Result<String, BlindMarkError> {
-    let bytes = bytes.strip_prefix(UTF8_BOM).unwrap_or(bytes);
-    std::str::from_utf8(bytes)
-        .map(|s| s.to_owned())
-        .map_err(|e| BlindMarkError::ImageProcessing(
-            format!("文件不是有效的 UTF-8 编码: {}", e)
-        ))
+    let stripped = bytes.strip_prefix(UTF8_BOM).unwrap_or(bytes);
+    // 优先尝试 UTF-8
+    if let Ok(s) = std::str::from_utf8(stripped) {
+        return Ok(s.to_owned());
+    }
+    // 回退：尝试 GBK 解码（encoding_rs 在 had_replacements=false 时表示无乱码替换）
+    let (decoded, _, had_replacements) = encoding_rs::GBK.decode(stripped);
+    if !had_replacements {
+        return Ok(decoded.into_owned());
+    }
+    Err(BlindMarkError::ImageProcessing(
+        "文件编码无法识别（非 UTF-8 / GBK），请确保文件使用 UTF-8 或 GBK 编码".to_string()
+    ))
 }
 
 /// 将字符串编码为 UTF-8 with BOM 的字节序列。
@@ -551,19 +559,29 @@ mod tests {
     }
 
     #[test]
-    fn test_embed_bytes_gbk_input_fails() {
-        // GBK 编码的字节不是合法 UTF-8，应返回错误
+    fn test_embed_bytes_gbk_input_succeeds() {
+        // GBK 编码的输入应能成功解码并转为 UTF-8 with BOM 输出
         let (encoded, _, _) = encoding_rs::GBK.encode(r#"{"name": "测试"}"#);
         let result = JsonWatermarker::embed_bytes(&encoded, "hello", DEFAULT_WATERMARK_KEY, "md5", None);
-        assert!(result.is_err(), "GBK 输入应返回 UTF-8 解码错误");
+        assert!(result.is_ok(), "GBK 输入应成功（回退到 GBK 解码）");
+        // 输出应以 UTF-8 BOM 开头
+        let out = result.unwrap();
+        assert_eq!(&out[..3], b"\xef\xbb\xbf", "GBK 输入的输出应以 UTF-8 BOM 开头");
+        // 输出应包含原始字段
+        let content = std::str::from_utf8(&out[3..]).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(content).unwrap();
+        assert_eq!(parsed["name"], "测试");
     }
 
     #[test]
     fn test_decode_text_bytes_invalid_encoding() {
-        // 非 UTF-8 字节应返回错误
-        let garbage = b"\xff\xfe\x80\x81\x82\x83";
+        // 既非合法 UTF-8 也非合法 GBK 的字节应返回错误
+        // 0xff 0xfe 在 UTF-8 中非法，在 GBK 中 0xff 也属于非法前导字节（GBK 0xff 无对应字符）
+        // 构造一个 GBK 也无法无损解码的序列（had_replacements=true）：
+        // GBK 双字节区首字节范围 0x81-0xFE，但尾字节若为 0x7F 则非法
+        let garbage = b"\x81\x7f\x82\x7f";
         let result = decode_text_bytes(garbage);
-        assert!(result.is_err(), "无效 UTF-8 应返回 Err");
+        assert!(result.is_err(), "GBK 也无法解码时应返回 Err");
     }
 
     #[test]

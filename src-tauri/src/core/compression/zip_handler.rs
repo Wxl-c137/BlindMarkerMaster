@@ -283,6 +283,12 @@ impl ArchiveHandler for ZipHandler {
                 format!("Failed to finalize ZIP archive: {}", e)
             ))?;
 
+        // Set UTF-8 flag (general purpose bit 11) on every entry.
+        // The zip crate only sets this bit for non-ASCII filenames; we force it
+        // unconditionally so that all tools (including VaM's loader) recognise
+        // filenames and JSON content as UTF-8.
+        patch_zip_utf8_flag(output_path)?;
+
         Ok(())
     }
 
@@ -299,6 +305,67 @@ impl ArchiveHandler for ZipHandler {
             })
             .unwrap_or(false)
     }
+}
+
+/// Set the UTF-8 flag (general purpose bit 11) on every local file header and
+/// central directory entry in a ZIP archive, in-place.
+///
+/// The zip crate 2.x sets this bit only for non-ASCII filenames
+/// (`is_utf8 = !name.is_ascii()`). Since all Rust strings are valid UTF-8,
+/// we patch every entry unconditionally after the archive is written.
+///
+/// ZIP structure offsets (little-endian u16 at each position):
+///   Local file header  : signature at 0, general purpose bit flag at +6
+///   Central dir header : signature at 0, general purpose bit flag at +8
+///
+/// Bit 11 (0x0800) occupies the high byte, so we OR byte at +7 / +9 with 0x08.
+fn patch_zip_utf8_flag(path: &Path) -> Result<(), BlindMarkError> {
+    // Pass 1: open with ZipArchive to get exact header positions from the
+    // parsed central directory (safe, structure-aware — no signature scanning).
+    let mut patches: Vec<(usize, usize)> = Vec::new();
+    {
+        let read_file = File::open(path)
+            .map_err(|e| BlindMarkError::Archive(
+                format!("UTF-8 flag patch: cannot open {}: {}", path.display(), e)
+            ))?;
+        let mut archive = ZipArchive::new(read_file)
+            .map_err(|e| BlindMarkError::Archive(
+                format!("UTF-8 flag patch: cannot parse ZIP: {}", e)
+            ))?;
+        for i in 0..archive.len() {
+            let entry = archive.by_index_raw(i)
+                .map_err(|e| BlindMarkError::Archive(
+                    format!("UTF-8 flag patch: cannot read entry {}: {}", i, e)
+                ))?;
+            // flag field starts at local_header+6 and central_header+8
+            patches.push((
+                entry.header_start() as usize + 6,
+                entry.central_header_start() as usize + 8,
+            ));
+        }
+    }
+
+    // Pass 2: read the raw bytes, OR bit 11 into the high byte of each flag,
+    // then write back.
+    let mut bytes = std::fs::read(path)
+        .map_err(|e| BlindMarkError::Archive(
+            format!("UTF-8 flag patch: read failed: {}", e)
+        ))?;
+    for (local_flag, central_flag) in patches {
+        // Bit 11 = 0x0800; in little-endian layout the high byte is at +1.
+        if local_flag + 1 < bytes.len() {
+            bytes[local_flag + 1] |= 0x08;
+        }
+        if central_flag + 1 < bytes.len() {
+            bytes[central_flag + 1] |= 0x08;
+        }
+    }
+    std::fs::write(path, &bytes)
+        .map_err(|e| BlindMarkError::Archive(
+            format!("UTF-8 flag patch: write back failed: {}", e)
+        ))?;
+
+    Ok(())
 }
 
 /// Returns true for formats that are already compressed and won't benefit from Deflate.
@@ -417,5 +484,41 @@ mod tests {
         let result = handler.create(temp_source.path(), &zip_path);
         assert!(result.is_ok());
         assert!(zip_path.exists());
+    }
+
+    /// Every entry written by `create()` must have the UTF-8 flag (bit 11) set
+    /// in both the local file header and the central directory header.
+    #[test]
+    fn test_create_sets_utf8_flag_on_all_entries() {
+        let temp_source = TempDir::new().unwrap();
+        let temp_archive = TempDir::new().unwrap();
+
+        // ASCII-only filenames: the zip crate would NOT set bit 11 without our patch.
+        fs::create_dir_all(temp_source.path().join("subdir")).unwrap();
+        fs::write(temp_source.path().join("meta.json"), b"{}").unwrap();
+        fs::write(temp_source.path().join("subdir/scene.vaj"), b"{}").unwrap();
+
+        let handler = ZipHandler::new();
+        let zip_path = temp_archive.path().join("test.zip");
+        handler.create(temp_source.path(), &zip_path).unwrap();
+
+        // Re-open and verify every entry has bit 11 set
+        let file = File::open(&zip_path).unwrap();
+        let mut archive = ZipArchive::new(file).unwrap();
+        let raw_bytes = std::fs::read(&zip_path).unwrap();
+
+        for i in 0..archive.len() {
+            let entry = archive.by_index_raw(i).unwrap();
+            let local_flag_hi = raw_bytes[entry.header_start() as usize + 7];
+            let central_flag_hi = raw_bytes[entry.central_header_start() as usize + 9];
+            assert!(
+                local_flag_hi & 0x08 != 0,
+                "Local header for entry {} is missing UTF-8 flag (bit 11)", i
+            );
+            assert!(
+                central_flag_hi & 0x08 != 0,
+                "Central dir for entry {} is missing UTF-8 flag (bit 11)", i
+            );
+        }
     }
 }

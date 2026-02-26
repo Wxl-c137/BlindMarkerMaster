@@ -31,7 +31,6 @@ pub struct ScanSummaryEvent {
     pub image_count: usize,
     pub vam_count: usize,
     pub vap_count: usize,
-    pub cslist_count: usize,
 }
 
 /// Emitted for each individual file as it starts being processed.
@@ -93,9 +92,8 @@ impl ProgressEmitter {
         image_count: usize,
         vam_count: usize,
         vap_count: usize,
-        cslist_count: usize,
     ) -> Result<(), String> {
-        let event = ScanSummaryEvent { json_count, vaj_count, vmi_count, image_count, vam_count, vap_count, cslist_count };
+        let event = ScanSummaryEvent { json_count, vaj_count, vmi_count, image_count, vam_count, vap_count };
         self.app
             .emit("watermark-scan-summary", event)
             .map_err(|e| format!("Failed to emit scan summary: {}", e))
